@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Paulze — B2B Marketplace for Near-Expiry Crop Protection Chemicals</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --bg-elevated: #141414;
+      --bg-card: #1a1a1a;
+      --accent: #00E5A0;
+      --accent-dim: rgba(0, 229, 160, 0.15);
+      --text: #e5e5e5;
+      --text-muted: #888;
+      --border: #2a2a2a;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: 'Outfit', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    /* Header */
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      padding: 1rem 0;
+      background: linear-gradient(to bottom, var(--bg) 60%, transparent);
+      transition: background 0.5s ease, padding 0.5s ease;
+    }
+    header.scrolled {
+      background: rgba(10, 10, 10, 0.95);
+      padding: 0.5rem 0;
+    }
+    .header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+    .logo-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      text-decoration: none;
+      color: inherit;
+    }
+    .logo-icon {
+      width: 36px;
+      height: 28px;
+      flex-shrink: 0;
+    }
+    .logo-icon svg { display: block; width: 100%; height: 100%; }
+    .logo-img {
+      height: 88px;
+      width: auto;
+      display: block;
+      transition: height 0.5s ease;
+    }
+    header.scrolled .logo-img {
+      height: 32px;
+    }
+    .logo-text {
+      font-weight: 600;
+      font-size: 1.4rem;
+      letter-spacing: -0.02em;
+      color: #fff;
+    }
+    .logo {
+      font-weight: 700;
+      font-size: 1.5rem;
+      letter-spacing: -0.02em;
+      color: var(--accent);
+    }
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.95rem;
+      transition: color 0.2s, font-size 0.5s ease;
+    }
+    header.scrolled .nav-links a { font-size: 0.8rem; }
+    .nav-links a:hover { color: var(--accent); }
+    @media (max-width: 640px) {
+      .nav-links { display: none; }
+    }
+
+    /* Hero */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 6rem 0 4rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -30%;
+      width: 80%;
+      height: 150%;
+      background: radial-gradient(ellipse, var(--accent-dim) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .hero-content {
+      position: relative;
+      z-index: 1;
+    }
+    .hero-badge {
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--accent);
+      background: var(--accent-dim);
+      padding: 0.35rem 0.75rem;
+      border-radius: 4px;
+      margin-bottom: 1.5rem;
+      letter-spacing: 0.05em;
+    }
+    .hero h1 {
+      font-size: clamp(2.25rem, 5vw, 3.5rem);
+      font-weight: 700;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      margin: 0 0 1.25rem;
+      max-width: 18ch;
+    }
+    .hero h1 span { color: var(--accent); }
+    .hero-tagline {
+      font-size: 1.2rem;
+      color: var(--text-muted);
+      max-width: 32rem;
+      margin-bottom: 2.5rem;
+    }
+    .hero-ctas {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.9rem 1.75rem;
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 600;
+      text-decoration: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+    }
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(0, 229, 160, 0.35);
+    }
+    .btn-secondary {
+      background: transparent;
+      color: var(--text);
+      border: 2px solid var(--border);
+    }
+    .btn-secondary:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* Sections */
+    section {
+      padding: 5rem 0;
+    }
+    .section-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--accent);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 0.75rem;
+    }
+    .section-title {
+      font-size: clamp(1.75rem, 3vw, 2.5rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin: 0 0 1rem;
+    }
+    .section-subtitle {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+      max-width: 36rem;
+      margin: 0 0 3rem;
+    }
+
+    /* Problem */
+    .problem {
+      background: var(--bg-elevated);
+    }
+    .problem-stat {
+      display: inline-block;
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 0.5rem;
+    }
+    .problem-stat + p {
+      color: var(--text-muted);
+      margin: 0 0 2rem;
+    }
+    .problem-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+    .problem-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.75rem;
+    }
+    .problem-card h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin: 0 0 0.5rem;
+    }
+    .problem-card p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin: 0;
+    }
+
+    /* How it works */
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2rem;
+      margin-top: 2.5rem;
+    }
+    @media (max-width: 768px) {
+      .steps { grid-template-columns: 1fr; }
+    }
+    .step {
+      position: relative;
+      padding: 2rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      transition: border-color 0.2s;
+    }
+    .step:hover { border-color: var(--accent); }
+    .step-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--accent);
+      margin-bottom: 1rem;
+    }
+    .step h3 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin: 0 0 0.5rem;
+    }
+    .step p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin: 0;
+    }
+    .step-arrow {
+      display: none;
+      position: absolute;
+      right: -1.25rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--border);
+      font-size: 1.5rem;
+    }
+    @media (min-width: 769px) {
+      .step:nth-child(1) .step-arrow,
+      .step:nth-child(2) .step-arrow { display: block; }
+    }
+
+    /* Benefits */
+    .benefits {
+      background: var(--bg-elevated);
+    }
+    .benefits-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 3rem;
+      margin-top: 2rem;
+    }
+    @media (max-width: 768px) {
+      .benefits-grid { grid-template-columns: 1fr; }
+    }
+    .benefits-column h3 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .benefits-column h3::before {
+      content: '';
+      width: 4px;
+      height: 1.2em;
+      background: var(--accent);
+      border-radius: 2px;
+    }
+    .benefits-column ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .benefits-column li {
+      padding: 0.5rem 0;
+      padding-left: 1.25rem;
+      position: relative;
+      color: var(--text-muted);
+      font-size: 0.98rem;
+    }
+    .benefits-column li::before {
+      content: '✓';
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* Footer */
+    footer {
+      padding: 4rem 0 2rem;
+      border-top: 1px solid var(--border);
+    }
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 3rem;
+      margin-bottom: 3rem;
+    }
+    @media (max-width: 640px) {
+      .footer-grid { grid-template-columns: 1fr; }
+    }
+    .footer-brand .logo { font-size: 1.35rem; }
+    .footer-brand p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin: 1rem 0 0;
+      max-width: 20rem;
+    }
+    .footer-contact h4 {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin: 0 0 1rem;
+    }
+    .footer-contact a {
+      display: block;
+      color: var(--text);
+      text-decoration: none;
+      margin-bottom: 0.5rem;
+      transition: color 0.2s;
+    }
+    .footer-contact a:hover { color: var(--accent); }
+    .footer-bottom {
+      padding-top: 2rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    /* Signup */
+    .signup {
+      background: var(--bg);
+    }
+    .signup-inner {
+      max-width: 480px;
+      margin: 0 auto;
+      text-align: center;
+    }
+    .signup .section-subtitle { margin-bottom: 2rem; }
+    .signup-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      text-align: left;
+    }
+    .signup-form label {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+    .signup-form input,
+    .signup-form select {
+      width: 100%;
+      padding: 0.85rem 1rem;
+      font-family: inherit;
+      font-size: 1rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      transition: border-color 0.2s;
+    }
+    .signup-form input:focus,
+    .signup-form select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    .signup-form select {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 1rem center;
+      padding-right: 2.5rem;
+    }
+    .signup-form button {
+      margin-top: 0.5rem;
+      padding: 0.9rem 1.75rem;
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 600;
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .signup-form button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(0, 229, 160, 0.35);
+    }
+  </style>
+</head>
+<body>
+  <header id="header">
+    <div class="header-inner">
+      <a href="./paulze.html" class="logo-link">
+        <img src="./assets/paulze-logo.svg" alt="Paulze" class="logo-img">
+      </a>
+      <nav>
+        <ul class="nav-links">
+          <li><a href="./paulze.html#problem">The Problem</a></li>
+          <li><a href="./paulze.html#how-it-works">How It Works</a></li>
+          <li><a href="./paulze.html#benefits">Benefits</a></li>
+          <li><a href="./paulze.html#signup">Get updates</a></li>
+          <li><a href="./co-founders.html">Co-founders</a></li>
+          <li><a href="./paulze.html#contact">Contact</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container hero-content">
+        <span class="hero-badge">B2B Marketplace</span>
+        <h1>Liquidate near-expiry crop protection. <span>No waste.</span></h1>
+        <p class="hero-tagline">
+          Paulze connects agrochemical manufacturers with vetted distributors to move soon-to-expire inventory at fair prices — so nothing goes to waste.
+        </p>
+        <div class="hero-ctas">
+          <a href="#signup" class="btn btn-primary">I'm a Manufacturer</a>
+          <a href="#signup" class="btn btn-secondary">I'm a Distributor</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="problem" class="problem">
+      <div class="container">
+        <p class="section-label">The Problem</p>
+        <h2 class="section-title">Billions in chemicals expire every year</h2>
+        <p class="section-subtitle">
+          Unsold crop protection products often sit until they pass expiry — destroying value for manufacturers and leaving distributors without access to discounted supply.
+        </p>
+        <div class="problem-stat">$2B+</div>
+        <p>Estimated value of crop protection chemicals that expire or are written off annually.</p>
+        <div class="problem-cards">
+          <div class="problem-card">
+            <h3>Manufacturers lose margin</h3>
+            <p>Excess inventory and write-offs hurt profitability and complicate planning.</p>
+          </div>
+          <div class="problem-card">
+            <h3>Distributors miss deals</h3>
+            <p>No trusted channel to source near-expiry product at discount for short-cycle use.</p>
+          </div>
+          <div class="problem-card">
+            <h3>Environment pays the cost</h3>
+            <p>Unused chemicals add to waste and disposal burden when they could still be used safely.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="how-it-works">
+      <div class="container">
+        <p class="section-label">How It Works</p>
+        <h2 class="section-title">Three steps to liquidate and buy</h2>
+        <p class="section-subtitle">
+          We broker the deal so manufacturers recover value and distributors get vetted product at a discount.
+        </p>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">Step 1</div>
+            <span class="step-arrow" aria-hidden="true">→</span>
+            <h3>Manufacturers list SKUs</h3>
+            <p>Submit near-expiry crop protection SKUs and volumes. We handle pricing and matching.</p>
+          </div>
+          <div class="step">
+            <div class="step-num">Step 2</div>
+            <span class="step-arrow" aria-hidden="true">→</span>
+            <h3>Paulze brokers the deal</h3>
+            <p>We connect you with vetted distributors and facilitate terms, documentation, and logistics.</p>
+          </div>
+          <div class="step">
+            <div class="step-num">Step 3</div>
+            <h3>Distributors buy at discount</h3>
+            <p>Distributors purchase at a discount for short-cycle use — product moves, everyone wins.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="benefits" class="benefits">
+      <div class="container">
+        <p class="section-label">Key Benefits</p>
+        <h2 class="section-title">Built for both sides of the market</h2>
+        <p class="section-subtitle">
+          Manufacturers recover value; distributors get reliable supply at better prices.
+        </p>
+        <div class="benefits-grid">
+          <div class="benefits-column">
+            <h3>For Manufacturers</h3>
+            <ul>
+              <li>Liquidate near-expiry inventory without damaging brand or channel</li>
+              <li>Recover value instead of writing off product</li>
+              <li>Vetted distributors only — no grey market risk</li>
+              <li>Simple process: list SKUs, we handle matching and brokering</li>
+            </ul>
+          </div>
+          <div class="benefits-column">
+            <h3>For Distributors</h3>
+            <ul>
+              <li>Access to discounted crop protection for short-cycle use</li>
+              <li>Trusted source — all product from verified manufacturers</li>
+              <li>Clear documentation and compliance support</li>
+              <li>Better margins on inventory that moves before expiry</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="signup" class="signup">
+      <div class="container">
+        <p class="section-label">Stay in the loop</p>
+        <h2 class="section-title">Get updates from Paulze</h2>
+        <div class="signup-inner">
+          <p class="section-subtitle">
+            Whether you're a manufacturer, distributor, or farmer — share your email and we'll keep you posted on launch and early access.
+          </p>
+          <form class="signup-form" action="#" method="post">
+            <label for="signup-email">Email</label>
+            <input type="email" id="signup-email" name="email" placeholder="you@company.com" required>
+            <label for="signup-role">I am a</label>
+            <select id="signup-role" name="role" required>
+              <option value="">Select one</option>
+              <option value="manufacturer">Manufacturer</option>
+              <option value="distributor">Distributor</option>
+              <option value="farmer">Farmer</option>
+            </select>
+            <button type="submit">Subscribe</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <footer id="contact">
+      <div class="container">
+        <div class="footer-grid">
+          <div class="footer-brand">
+            <a href="./paulze.html" class="logo-link">
+              <img src="./assets/paulze-logo.svg" alt="Paulze" class="logo-img">
+            </a>
+            <p>B2B marketplace for near-expiry crop protection chemicals. Connect with us to list or buy.</p>
+          </div>
+          <div class="footer-contact">
+            <h4>Contact</h4>
+            <a href="mailto:hello@paulze.com">hello@paulze.com</a>
+            <a href="mailto:manufacturers@paulze.com">manufacturers@paulze.com</a>
+            <a href="mailto:distributors@paulze.com">distributors@paulze.com</a>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          © Paulze. All rights reserved.
+        </div>
+      </div>
+    </footer>
+  </main>
+
+  <script>
+    (function() {
+      var header = document.getElementById('header');
+      function onScroll() {
+        header.classList.toggle('scrolled', window.scrollY > 40);
+      }
+      window.addEventListener('scroll', onScroll, { passive: true });
+    })();
+  </script>
+</body>
+</html>
