@@ -199,9 +199,6 @@ export default function Paulze() {
                 <a href="mailto:team@paulze.com">team@paulze.com</a>
               </div>
             </div>
-            <div className="footer-bottom">
-              © Paulze. All rights reserved.
-            </div>
           </div>
         </footer>
       </main>
