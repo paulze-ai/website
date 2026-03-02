@@ -35,7 +35,7 @@ export default function Paulze() {
               <li><a href="#problem">The Problem</a></li>
               <li><a href="#how-it-works">How It Works</a></li>
               <li><a href="#benefits">Benefits</a></li>
-              <li><a href="#team">Co-founders</a></li>
+              <li><a href="#co-founders">Co-founders</a></li>
               <li><a href="#contact">Contact</a></li>
             </ul>
           </nav>
