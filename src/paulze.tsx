@@ -1,10 +1,10 @@
 import { useEffect } from 'react';
-import './paulze.css';
+import LinkedInIcon from './assets/linkedin.svg?react';
 import paulzeLogo from './assets/logo_no_black.svg';
-import neoPhoto from './assets/neo-matsuyama.png';
 import mattPhoto from './assets/matthew-fallon.png';
 import meyerPhoto from './assets/meyer-eskin.png';
-import LinkedInIcon from './assets/linkedin.svg?react';
+import neoPhoto from './assets/neo-matsuyama.png';
+import './paulze.css';
 
 export default function Paulze() {
   useEffect(() => {
@@ -60,7 +60,7 @@ export default function Paulze() {
             <p className="section-subtitle">
               Unsold crop protection products often sit until they pass expiry — destroying value for manufacturers and leaving distributors without access to discounted supply.
             </p>
-            <div className="problem-stat">$2B+</div>
+            <div className="problem-stat">$4B+</div>
             <p>Estimated value of crop protection chemicals that expire or are written off annually.</p>
             <div className="problem-cards">
               <div className="problem-card">
