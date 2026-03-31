@@ -185,22 +185,34 @@ export default function Paulze() {
           </div>
         </section>
 
-        <footer id="contact">
+        <section id="contact" className="contact-section">
           <div className="container">
-            <div className="footer-grid">
-              <div className="footer-brand">
-                <a href="/" className="logo-link">
-                  <img src={paulzeLogo} alt="Paulze" className="logo-img" />
-                </a>
-                <p>B2B marketplace for near-expiry crop protection chemicals. Connect with us to list or buy.</p>
+            <div className="contact-card">
+              <div className="contact-card-text">
+                <p className="section-label">Contact</p>
+                <h2 className="contact-headline">Built for manufacturers, distributors, and strategic partnerships.</h2>
+                <p className="contact-body">
+                  Paulze is recovering billions in wasted agrochemical value — connecting the supply chain so nothing expires unsold. Reach out to discuss investment, partnership, or market expansion.
+                </p>
               </div>
-              <div className="footer-contact">
-                <h4>Contact</h4>
-                <a href="mailto:team@paulze.com">team@paulze.com</a>
+              <div className="contact-card-cta">
+                <a href="mailto:investors@paulze.com" className="contact-cta">Get in Touch</a>
               </div>
             </div>
           </div>
+        </section>
+
+        <footer>
+          <div className="container">
+            <div className="footer-brand">
+              <a href="/" className="logo-link">
+                <img src={paulzeLogo} alt="Paulze" className="logo-img" />
+              </a>
+              <p>B2B marketplace for near-expiry crop protection chemicals.</p>
+            </div>
+          </div>
         </footer>
+
       </main>
     </>
   );
