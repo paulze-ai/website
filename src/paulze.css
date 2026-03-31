@@ -269,9 +269,9 @@ section {
 .step-arrow {
   display: none;
   position: absolute;
-  right: -1.25rem;
+  right: -1rem;
   top: 50%;
-  transform: translateY(-50%);
+  transform: translateX(50%) translateY(-50%);
   color: var(--border);
   font-size: 1.5rem;
 }
