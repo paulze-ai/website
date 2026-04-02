@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { type FormEvent, useEffect, useRef, useState } from 'react';
 import LinkedInIcon from './assets/linkedin.svg?react';
 import paulzeLogo from './assets/logo_no_black.svg';
 import mattPhoto from './assets/matthew-fallon.png';
@@ -414,31 +414,6 @@ function useAnimatedCounter(ref: React.RefObject<HTMLElement | null>) {
   }, [ref]);
 }
 
-function useSimpleCounter(ref: React.RefObject<HTMLElement | null>, target: number, suffix: string, duration = 2500) {
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry.isIntersecting) return;
-        io.disconnect();
-        const start = performance.now();
-        function tick(now: number) {
-          const progress = Math.min((now - start) / duration, 1);
-          const eased = 1 - Math.pow(1 - progress, 3);
-          const value = Math.round(eased * target);
-          el!.textContent = `${value}${suffix}`;
-          if (progress < 1) requestAnimationFrame(tick);
-        }
-        requestAnimationFrame(tick);
-      },
-      { threshold: 0.5 },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, [ref, target, suffix, duration]);
-}
-
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 const STEPS = [
@@ -453,19 +428,64 @@ export default function Paulze() {
   const [activeStep, setActiveStep] = useState(0);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [activeSection, setActiveSection] = useState('');
+  const [pageProgress, setPageProgress] = useState(0);
+
+  const HERO_PHRASES = ['No waste.', 'No write-offs.', 'No grey market.'];
+  const [heroPhrase, setHeroPhrase] = useState(0);
+  const [heroFading, setHeroFading] = useState(false);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setHeroFading(true);
+      setTimeout(() => {
+        setHeroPhrase(i => (i + 1) % HERO_PHRASES.length);
+        setHeroFading(false);
+      }, 400);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const [email, setEmail] = useState('');
+  const [emailStatus, setEmailStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
+  function handleEmailSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setEmailStatus('error');
+      return;
+    }
+    // For now, open mailto as a fallback. Replace with API call when backend is ready.
+    window.location.href = `mailto:investors@paulze.com?subject=Interest from ${encodeURIComponent(email)}&body=Contact me at ${encodeURIComponent(email)}`;
+    setEmailStatus('success');
+    setEmail('');
+    setTimeout(() => setEmailStatus('idle'), 4000);
+  }
 
   useAnimatedCounter(statRef);
   useTiltCards();
 
+  // Cursor-following glow on CTA buttons
+  useEffect(() => {
+    const buttons = document.querySelectorAll<HTMLElement>('.glow-btn');
+    function onMove(this: HTMLElement, e: MouseEvent) {
+      const rect = this.getBoundingClientRect();
+      this.style.setProperty('--glow-x', `${e.clientX - rect.left}px`);
+      this.style.setProperty('--glow-y', `${e.clientY - rect.top}px`);
+    }
+    buttons.forEach(btn => btn.addEventListener('mousemove', onMove));
+    return () => buttons.forEach(btn => btn.removeEventListener('mousemove', onMove));
+  }, []);
+
   useEffect(() => {
     const header = document.getElementById('header') as HTMLElement;
-    const logoImg = header.querySelector<HTMLImageElement>('.logo-img');
-    const navLinks = header.querySelectorAll<HTMLAnchorElement>('.nav-links a');
     function onScroll() {
-      const p = Math.min(window.scrollY / 120, 1);
-      header.style.padding = `${1 - 0.5 * p}rem 0`;
-      if (logoImg) logoImg.style.height = `${88 - 56 * p}px`;
-      navLinks.forEach(a => { a.style.fontSize = `${0.95 - 0.15 * p}rem`; });
+      if (window.scrollY > 50) {
+        header.classList.add('scrolled');
+      } else {
+        header.classList.remove('scrolled');
+      }
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      setPageProgress(docHeight > 0 ? (window.scrollY / docHeight) * 100 : 0);
     }
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
@@ -518,6 +538,7 @@ export default function Paulze() {
   return (
     <>
       <div className="grain" aria-hidden="true" />
+      <div className="scroll-progress-bar" style={{ width: `${pageProgress}%` }} aria-hidden="true" />
 
       {/* Floating scrollspy nav */}
       <nav className="scroll-nav" aria-label="Page sections">
@@ -539,20 +560,20 @@ export default function Paulze() {
         ))}
       </nav>
 
-      <header id="header">
-        <div className="header-inner">
+      <header id="header" className="floating-header">
+        <div className="floating-nav-pill">
           <a href="/" className="logo-link">
             <img src={paulzeLogo} alt="Paulze" className="logo-img" />
           </a>
-          <nav>
+          <nav className="pill-nav">
             <ul className="nav-links">
-              <li><a href="#problem">The Problem</a></li>
-              <li><a href="#how-it-works">How It Works</a></li>
-              <li><a href="#benefits">Benefits</a></li>
-              <li><a href="#co-founders">Co-founders</a></li>
-              <li><a href="#contact">Contact</a></li>
+              <li><a href="#problem" className={activeSection === 'problem' ? 'active' : ''}>The Problem</a></li>
+              <li><a href="#how-it-works" className={activeSection === 'how-it-works' ? 'active' : ''}>How It Works</a></li>
+              <li><a href="#benefits" className={activeSection === 'benefits' ? 'active' : ''}>Benefits</a></li>
+              <li><a href="#co-founders" className={activeSection === 'co-founders' ? 'active' : ''}>Co-founders</a></li>
             </ul>
           </nav>
+          <a href="#contact" className="nav-cta">Contact</a>
         </div>
       </header>
 
@@ -570,11 +591,11 @@ export default function Paulze() {
 
           <div className="container hero-content">
             <span className="hero-badge hero-enter hero-enter-badge">B2B Marketplace</span>
-            <h1 className="hero-enter hero-enter-h1">Liquidate near-expiry crop protection. <span>No waste.</span></h1>
+            <h1 className="hero-enter hero-enter-h1">Liquidate near-expiry crop protection. <span className={`no-wrap hero-cycle ${heroFading ? 'hero-cycle-out' : 'hero-cycle-in'}`}>{HERO_PHRASES[heroPhrase]}</span></h1>
             <p className="hero-tagline hero-enter hero-enter-tagline">
               Paulze connects agrochemical manufacturers with vetted distributors to move soon-to-expire inventory at fair prices — so nothing goes to waste.
             </p>
-            <a href="#contact" className="hero-cta hero-enter hero-enter-cta">Get in Touch</a>
+            <a href="#contact" className="hero-cta glow-btn hero-enter hero-enter-cta">Get in Touch</a>
           </div>
         </section>
 
@@ -583,31 +604,37 @@ export default function Paulze() {
           <div className="section-divider-glow" />
         </div>
 
-        <section id="problem" className="problem">
+        <section id="problem" className="problem dot-grid-bg">
           <div className="container">
             <p className="section-label reveal">The Problem</p>
             <h2 className="section-title reveal">Billions in chemicals expire every year</h2>
             <p className="section-subtitle reveal">
               Unsold crop protection products often sit until they pass expiry — destroying value for manufacturers and leaving distributors without access to discounted supply.
             </p>
-            <div className="problem-stat-inline reveal">
-              <span className="problem-stat" ref={statRef}>$0B+</span>
-            </div>
-            <p className="problem-stat-desc reveal">
-              Estimated value of crop protection chemicals that expire or are written off annually.
-            </p>
-            <div className="problem-cards">
-              <div className="problem-card tilt-card reveal-slide" style={{ '--d': '0s' } as React.CSSProperties}>
+            <div className="bento-grid">
+              <div className="bento-card bento-hero glow-border tilt-card reveal" style={{ '--d': '0s' } as React.CSSProperties}>
+                <div className="bento-hero-stat">
+                  <span className="problem-stat" ref={statRef}>$0B+</span>
+                  <p className="bento-hero-label">wasted annually</p>
+                </div>
+                <p className="bento-hero-desc">
+                  Estimated value of crop protection chemicals that expire or are written off each year across the global supply chain.
+                </p>
+              </div>
+              <div className="bento-card bento-small glow-border tilt-card reveal-slide" style={{ '--d': '0.1s' } as React.CSSProperties}>
+                <div className="bento-icon">📉</div>
                 <h3>Manufacturers lose margin</h3>
                 <p>Excess inventory and write-offs hurt profitability and complicate planning.</p>
               </div>
-              <div className="problem-card tilt-card reveal-slide" style={{ '--d': '0.15s' } as React.CSSProperties}>
+              <div className="bento-card bento-small glow-border tilt-card reveal-slide" style={{ '--d': '0.2s' } as React.CSSProperties}>
+                <div className="bento-icon">🔍</div>
                 <h3>Distributors miss deals</h3>
                 <p>No trusted channel to source near-expiry product at discount for short-cycle use.</p>
               </div>
-              <div className="problem-card tilt-card reveal-slide" style={{ '--d': '0.3s' } as React.CSSProperties}>
+              <div className="bento-card bento-wide glow-border tilt-card reveal" style={{ '--d': '0.3s' } as React.CSSProperties}>
+                <div className="bento-icon">🌍</div>
                 <h3>Environment pays the cost</h3>
-                <p>Unused chemicals add to waste and disposal burden when they could still be used safely.</p>
+                <p>Unused chemicals add to waste and disposal burden when they could still be used safely. The environmental impact compounds annually as disposal capacity shrinks.</p>
               </div>
             </div>
           </div>
@@ -688,7 +715,7 @@ export default function Paulze() {
           <div className="section-divider-glow" />
         </div>
 
-        <section id="benefits" className="benefits">
+        <section id="benefits" className="benefits dot-grid-bg">
           <div className="container">
             <p className="section-label reveal">Key Benefits</p>
             <h2 className="section-title reveal">Built for both sides of the market</h2>
@@ -696,7 +723,7 @@ export default function Paulze() {
               Manufacturers recover value; distributors get reliable supply at better prices.
             </p>
             <div className="benefits-grid">
-              <div className="benefits-column reveal" style={{ '--d': '0s' } as React.CSSProperties}>
+              <div className="benefits-column glow-border reveal" style={{ '--d': '0s' } as React.CSSProperties}>
                 <h3>For Manufacturers</h3>
                 <ul>
                   <li>Liquidate near-expiry inventory without damaging brand or channel</li>
@@ -705,7 +732,7 @@ export default function Paulze() {
                   <li>Simple process: list SKUs, we handle matching and brokering</li>
                 </ul>
               </div>
-              <div className="benefits-column reveal" style={{ '--d': '0.15s' } as React.CSSProperties}>
+              <div className="benefits-column glow-border reveal" style={{ '--d': '0.15s' } as React.CSSProperties}>
                 <h3>For Distributors</h3>
                 <ul>
                   <li>Access to discounted crop protection for short-cycle use</li>
@@ -728,7 +755,7 @@ export default function Paulze() {
               The team building the marketplace for near-expiry crop protection.
             </p>
             <div className="founders-grid">
-              <article className="founder-card tilt-card reveal" style={{ '--d': '0s' } as React.CSSProperties}>
+              <article className="founder-card glow-border tilt-card reveal" style={{ '--d': '0s' } as React.CSSProperties}>
                 <div className="founder-photo" aria-hidden="true">
                   <img src={meyerPhoto} alt="" />
                 </div>
@@ -739,7 +766,7 @@ export default function Paulze() {
                   LinkedIn
                 </a>
               </article>
-              <article className="founder-card tilt-card reveal" style={{ '--d': '0.12s' } as React.CSSProperties}>
+              <article className="founder-card glow-border tilt-card reveal" style={{ '--d': '0.12s' } as React.CSSProperties}>
                 <div className="founder-photo" aria-hidden="true">
                   <img src={neoPhoto} alt="" />
                 </div>
@@ -750,7 +777,7 @@ export default function Paulze() {
                   LinkedIn
                 </a>
               </article>
-              <article className="founder-card tilt-card reveal" style={{ '--d': '0.24s' } as React.CSSProperties}>
+              <article className="founder-card glow-border tilt-card reveal" style={{ '--d': '0.24s' } as React.CSSProperties}>
                 <div className="founder-photo" aria-hidden="true">
                   <img src={mattPhoto} alt="" />
                 </div>
@@ -767,7 +794,7 @@ export default function Paulze() {
 
         <section id="contact" className="contact-section">
           <div className="container">
-            <div className="contact-card reveal">
+            <div className="contact-card glow-border reveal">
               <div className="contact-card-text">
                 <p className="section-label">Contact</p>
                 <h2 className="contact-headline">Built for manufacturers, distributors, and strategic partnerships.</h2>
@@ -775,8 +802,29 @@ export default function Paulze() {
                   Paulze is recovering billions in wasted agrochemical value — connecting the supply chain so nothing expires unsold. Reach out to discuss investment, partnership, or market expansion.
                 </p>
               </div>
-              <div className="contact-card-cta">
-                <a href="mailto:investors@paulze.com" className="contact-cta">Get in Touch</a>
+              <div className="contact-form-wrap">
+                <form className="contact-form" onSubmit={handleEmailSubmit}>
+                  <div className="contact-input-group">
+                    <input
+                      type="email"
+                      className={`contact-input ${emailStatus === 'error' ? 'contact-input-error' : ''}`}
+                      placeholder="your@email.com"
+                      value={email}
+                      onChange={e => { setEmail(e.target.value); setEmailStatus('idle'); }}
+                      required
+                    />
+                    <button type="submit" className="contact-submit glow-btn">
+                      Get in Touch
+                    </button>
+                  </div>
+                  {emailStatus === 'success' && (
+                    <p className="contact-feedback contact-feedback-success">Opening email — we'll be in touch!</p>
+                  )}
+                  {emailStatus === 'error' && (
+                    <p className="contact-feedback contact-feedback-error">Please enter a valid email address.</p>
+                  )}
+                </form>
+                <p className="contact-fine-print">Or email us directly at <a href="mailto:investors@paulze.com">investors@paulze.com</a></p>
               </div>
             </div>
           </div>
