@@ -349,7 +349,7 @@ function useTiltCards() {
       const rect = this.getBoundingClientRect();
       const x = (e.clientX - rect.left) / rect.width - 0.5;   // -0.5 to 0.5
       const y = (e.clientY - rect.top) / rect.height - 0.5;
-      this.style.transform = `perspective(800px) rotateY(${x * 14}deg) rotateX(${-y * 14}deg)`;
+      this.style.transform = `perspective(800px) rotateY(${x * 8}deg) rotateX(${-y * 8}deg)`;
       this.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
       this.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
     }
@@ -429,6 +429,7 @@ export default function Paulze() {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [activeSection, setActiveSection] = useState('');
   const [pageProgress, setPageProgress] = useState(0);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const HERO_PHRASES = ['No waste.', 'No write-offs.', 'No grey market.'];
   const [typedText, setTypedText] = useState('');
@@ -484,6 +485,12 @@ export default function Paulze() {
     setTimeout(() => setEmailStatus('idle'), 4000);
   }
 
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    document.body.style.overflow = menuOpen ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [menuOpen]);
+
   useAnimatedCounter(statRef);
   useTiltCards();
 
@@ -501,14 +508,24 @@ export default function Paulze() {
 
   useEffect(() => {
     const header = document.getElementById('header') as HTMLElement;
+    const globe = document.querySelector<HTMLElement>('.globe-canvas');
+    const glows = document.querySelectorAll<HTMLElement>('.hero-glow');
+
     function onScroll() {
-      if (window.scrollY > 50) {
+      const sy = window.scrollY;
+      if (sy > 50) {
         header.classList.add('scrolled');
       } else {
         header.classList.remove('scrolled');
       }
       const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-      setPageProgress(docHeight > 0 ? (window.scrollY / docHeight) * 100 : 0);
+      setPageProgress(docHeight > 0 ? (sy / docHeight) * 100 : 0);
+
+      // Parallax — only apply while hero is in view
+      if (sy < window.innerHeight * 1.5) {
+        if (globe) globe.style.transform = `translate(-50%, -43%) translateY(${sy * 0.12}px)`;
+        glows.forEach(g => { g.style.transform = `translateY(${sy * 0.06}px)`; });
+      }
     }
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
@@ -596,9 +613,40 @@ export default function Paulze() {
               <li><a href="#co-founders" className={activeSection === 'co-founders' ? 'active' : ''}>Co-founders</a></li>
             </ul>
           </nav>
-          <a href="#contact" className="nav-cta">Contact</a>
+          <a href="#contact" className="nav-cta nav-cta-desktop">Contact</a>
+          <button
+            className={`hamburger-btn ${menuOpen ? 'open' : ''}`}
+            onClick={() => setMenuOpen(v => !v)}
+            aria-label="Toggle menu"
+            aria-expanded={menuOpen}
+          >
+            <span /><span /><span />
+          </button>
         </div>
       </header>
+
+      {/* Mobile menu overlay */}
+      <div className={`mobile-overlay ${menuOpen ? 'open' : ''}`}>
+        <nav className="mobile-overlay-nav">
+          {[
+            { href: '#problem', label: 'The Problem' },
+            { href: '#how-it-works', label: 'How It Works' },
+            { href: '#benefits', label: 'Benefits' },
+            { href: '#co-founders', label: 'Co-founders' },
+            { href: '#contact', label: 'Contact' },
+          ].map((link, i) => (
+            <a
+              key={link.href}
+              href={link.href}
+              className="mobile-overlay-link"
+              style={{ transitionDelay: menuOpen ? `${0.05 + i * 0.06}s` : '0s' }}
+              onClick={() => setMenuOpen(false)}
+            >
+              {link.label}
+            </a>
+          ))}
+        </nav>
+      </div>
 
       <main>
 
@@ -645,17 +693,33 @@ export default function Paulze() {
                 </p>
               </div>
               <div className="bento-card bento-small glow-border tilt-card reveal-slide" style={{ '--d': '0.1s' } as React.CSSProperties}>
-                <div className="bento-icon">📉</div>
+                <div className="bento-icon">
+                  <svg className="bento-svg-icon" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="4 8 12 16 18 10 28 24" />
+                    <line x1="28" y1="8" x2="28" y2="24" />
+                  </svg>
+                </div>
                 <h3>Manufacturers lose margin</h3>
                 <p>Excess inventory and write-offs hurt profitability and complicate planning.</p>
               </div>
               <div className="bento-card bento-small glow-border tilt-card reveal-slide" style={{ '--d': '0.2s' } as React.CSSProperties}>
-                <div className="bento-icon">🔍</div>
+                <div className="bento-icon">
+                  <svg className="bento-svg-icon" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="14" cy="14" r="9" />
+                    <line x1="21" y1="21" x2="28" y2="28" />
+                  </svg>
+                </div>
                 <h3>Distributors miss deals</h3>
                 <p>No trusted channel to source near-expiry product at discount for short-cycle use.</p>
               </div>
               <div className="bento-card bento-wide glow-border tilt-card reveal" style={{ '--d': '0.3s' } as React.CSSProperties}>
-                <div className="bento-icon">🌍</div>
+                <div className="bento-icon">
+                  <svg className="bento-svg-icon" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="16" cy="16" r="12" />
+                    <path d="M4 16 Q10 10 16 16 Q22 22 28 16" />
+                    <line x1="16" y1="4" x2="16" y2="28" />
+                  </svg>
+                </div>
                 <h3>Environment pays the cost</h3>
                 <p>Unused chemicals add to waste and disposal burden when they could still be used safely. The environmental impact compounds annually as disposal capacity shrinks.</p>
               </div>
