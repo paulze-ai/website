@@ -4,58 +4,73 @@ import paulzeLogo from './assets/logo_no_black.svg';
 import mattPhoto from './assets/matthew-fallon.png';
 import meyerPhoto from './assets/meyer-eskin.png';
 import neoPhoto from './assets/neo-matsuyama.png';
+import { CONTINENTS, type Polygon } from './continent-data';
 import './paulze.css';
 
 // ─── Globe Canvas ─────────────────────────────────────────────────────────────
 
 const CITY_LIGHTS: [number, number][] = [
-  // North America
   [40.71, -74.01], [34.05, -118.24], [41.88, -87.63], [29.76, -95.37],
   [33.45, -112.07], [47.61, -122.33], [25.77, -80.19], [32.78, -96.80],
-  [39.95, -75.17], [45.52, -122.68], [36.17, -86.78], [44.98, -93.27],
   [38.90, -77.04], [42.36, -71.06], [43.65, -79.38], [45.50, -73.57],
-  [49.25, -123.12], [51.05, -114.07], [53.55, -113.49],
-  // South America
   [-23.55, -46.63], [-34.60, -58.38], [-12.04, -77.03], [4.71, -74.07],
-  [-33.46, -70.65], [-15.78, -47.93], [-3.13, -60.02], [10.49, -66.88],
-  [-8.05, -34.88], [-30.03, -51.23],
-  // Europe
+  [-33.46, -70.65], [-15.78, -47.93],
   [51.51, -0.13], [48.85, 2.35], [52.52, 13.41], [40.42, -3.70],
-  [41.90, 12.50], [59.33, 18.07], [55.68, 12.57], [53.34, -6.27],
-  [48.21, 16.37], [47.38, 8.54], [50.85, 4.35], [52.37, 4.90],
-  [43.30, 5.37], [45.46, 9.19], [37.98, 23.73], [44.43, 26.10],
-  [50.45, 30.52], [59.94, 30.32], [55.75, 37.62], [53.90, 27.57],
-  [54.69, 25.28], [56.95, 24.11], [59.44, 24.75],
-  // Middle East
-  [41.01, 28.98], [35.69, 51.39], [33.34, 44.40], [24.47, 39.61],
-  [24.87, 67.03], [31.78, 35.22], [33.89, 35.50], [25.20, 55.27],
-  [26.22, 50.59], [23.59, 58.59],
-  // South Asia
-  [19.08, 72.88], [28.64, 77.22], [22.57, 88.36], [13.08, 80.27],
-  [12.97, 77.59], [17.38, 78.49], [23.73, 90.40], [6.93, 79.85],
-  [27.71, 85.32], [31.56, 74.35],
-  // East Asia
-  [39.91, 116.39], [31.23, 121.47], [22.54, 114.06], [30.57, 104.07],
-  [23.13, 113.26], [45.75, 126.63], [41.80, 123.43], [36.07, 120.38],
-  [34.27, 108.93], [29.56, 106.55], [35.69, 139.69], [34.69, 135.50],
-  [35.18, 136.91], [43.06, 141.35], [37.57, 126.98], [35.17, 129.07],
-  [25.03, 121.56],
-  // Southeast Asia
-  [1.36, 103.82], [13.75, 100.52], [3.14, 101.69], [10.82, 106.63],
-  [14.60, 121.00], [6.14, 106.81], [-6.21, 106.85], [16.87, 96.17],
-  [11.56, 104.92],
-  // Africa
+  [41.90, 12.50], [59.33, 18.07], [55.75, 37.62],
+  [41.01, 28.98], [35.69, 51.39], [25.20, 55.27],
+  [19.08, 72.88], [28.64, 77.22], [13.08, 80.27],
+  [39.91, 116.39], [31.23, 121.47], [22.54, 114.06],
+  [35.69, 139.69], [37.57, 126.98],
+  [1.36, 103.82], [13.75, 100.52],
   [30.06, 31.25], [-26.20, 28.04], [6.38, 3.52], [-1.29, 36.82],
-  [-8.84, 13.23], [3.85, 11.52], [14.69, -17.44], [-4.32, 15.32],
-  [33.89, 9.54], [36.82, 10.17], [-33.93, 18.42], [-25.97, 32.59],
-  [-18.91, 47.54],
-  // Australia & NZ
-  [-33.87, 151.21], [-37.81, 144.96], [-27.47, 153.03],
-  [-31.95, 115.86], [-34.93, 138.60], [-36.86, 174.77],
+  [-33.87, 151.21], [-37.81, 144.96],
 ];
 
-// Fixed pixel resolution for the canvas buffer — CSS handles visual scaling
 const CANVAS_SIZE = 900;
+const DEG2RAD = Math.PI / 180;
+
+/**
+ * Draw a continent polygon. Hidden vertices are projected onto the sphere
+ * edge so the polygon naturally hugs the silhouette — no arcs, no chords,
+ * no direction ambiguity, no edge glitches.
+ */
+function drawContinentPolygon(
+  ctx: CanvasRenderingContext2D,
+  polygon: Polygon,
+  cx: number,
+  cy: number,
+  R: number,
+  lonOffset: number,
+) {
+  const Z_CLIP = 0.12; // fade-out zone slightly inside the silhouette
+
+  let anyVisible = false;
+  const projected = polygon.map(([latDeg, lonDeg]) => {
+    const lat = latDeg * DEG2RAD;
+    const lon = lonDeg * DEG2RAD + lonOffset;
+    const x = Math.cos(lat) * Math.sin(lon);
+    const y = -Math.sin(lat);
+    const z = Math.cos(lat) * Math.cos(lon);
+
+    if (z > Z_CLIP) {
+      anyVisible = true;
+      return { sx: cx + x * R, sy: cy + y * R };
+    }
+    // Hidden: push (x,y) outward to lie on the sphere edge circle
+    const len = Math.sqrt(x * x + y * y) || 1;
+    return { sx: cx + (x / len) * R, sy: cy + (y / len) * R };
+  });
+
+  if (!anyVisible) return;
+
+  ctx.beginPath();
+  ctx.moveTo(projected[0].sx, projected[0].sy);
+  for (let i = 1; i < projected.length; i++) {
+    ctx.lineTo(projected[i].sx, projected[i].sy);
+  }
+  ctx.closePath();
+  ctx.fill();
+}
 
 function GlobeCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -66,12 +81,37 @@ function GlobeCanvas() {
     const ctx = canvas.getContext('2d')!;
     if (!ctx) return;
 
-    // Set fixed buffer size once — no layout dependency
-    canvas.width  = CANVAS_SIZE;
+    canvas.width = CANVAS_SIZE;
     canvas.height = CANVAS_SIZE;
 
     let animId: number;
     let lonOffset = 0;
+    let rotSpeed = 0.0018; // base auto-rotation speed (rad/frame)
+    let dragVelX = 0;      // velocity from mouse drag
+    let isDragging = false;
+    let lastMouseX = 0;
+
+    // ── Mouse interaction ──────────────────────────────────────────────
+    function onMouseDown(e: MouseEvent) {
+      isDragging = true;
+      lastMouseX = e.clientX;
+      dragVelX = 0;
+    }
+    function onMouseMove(e: MouseEvent) {
+      if (!isDragging) return;
+      const dx = e.clientX - lastMouseX;
+      dragVelX = dx * 0.005;    // map px to radians
+      lastMouseX = e.clientX;
+    }
+    function onMouseUp() {
+      isDragging = false;
+      // dragVelX carries momentum, decays each frame
+    }
+
+    canvas.style.pointerEvents = 'auto';
+    canvas.addEventListener('mousedown', onMouseDown);
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
 
     function draw() {
       const W = CANVAS_SIZE;
@@ -81,48 +121,52 @@ function GlobeCanvas() {
 
       const cx = W / 2;
       const cy = H / 2;
-      const R  = W * 0.42;
+      const R = W * 0.42;
 
-      lonOffset += 0.0018;
+      // Apply rotation: auto-spin + drag momentum
+      if (isDragging) {
+        lonOffset += dragVelX;
+      } else {
+        // Decay drag velocity toward zero, blend back to auto-spin
+        dragVelX *= 0.95;
+        lonOffset += rotSpeed + dragVelX;
+      }
 
-      const STEPS = 120;
-
-      // ── Atmosphere outer glow ─────────────────────────────────────────────
-      const atmo = ctx.createRadialGradient(cx, cy, R * 0.9, cx, cy, R * 1.14);
-      atmo.addColorStop(0,   'rgba(0, 229, 160, 0.00)');
-      atmo.addColorStop(0.3, 'rgba(0, 229, 160, 0.20)');
-      atmo.addColorStop(0.7, 'rgba(0, 229, 160, 0.08)');
-      atmo.addColorStop(1,   'rgba(0, 229, 160, 0.00)');
+      // ── Atmosphere outer glow ───────────────────────────────────────────
+      const atmo = ctx.createRadialGradient(cx, cy, R * 0.92, cx, cy, R * 1.18);
+      atmo.addColorStop(0, 'rgba(0, 229, 160, 0.00)');
+      atmo.addColorStop(0.25, 'rgba(0, 229, 160, 0.14)');
+      atmo.addColorStop(0.55, 'rgba(0, 229, 160, 0.06)');
+      atmo.addColorStop(1, 'rgba(0, 229, 160, 0.00)');
       ctx.beginPath();
-      ctx.arc(cx, cy, R * 1.14, 0, Math.PI * 2);
+      ctx.arc(cx, cy, R * 1.18, 0, Math.PI * 2);
       ctx.fillStyle = atmo;
       ctx.fill();
 
-      // ── Sphere base ───────────────────────────────────────────────────────
+      // ── Sphere base (ocean) ─────────────────────────────────────────────
       ctx.save();
       ctx.beginPath();
       ctx.arc(cx, cy, R, 0, Math.PI * 2);
       ctx.clip();
 
-      const base = ctx.createRadialGradient(
-        cx - R * 0.3, cy - R * 0.25, R * 0.08,
-        cx, cy, R
+      const ocean = ctx.createRadialGradient(
+        cx - R * 0.25, cy - R * 0.2, R * 0.05,
+        cx, cy, R,
       );
-      base.addColorStop(0,   '#0a2e1c');
-      base.addColorStop(0.5, '#061a10');
-      base.addColorStop(1,   '#020d07');
-      ctx.fillStyle = base;
+      ocean.addColorStop(0, '#072a18');
+      ocean.addColorStop(0.4, '#051a10');
+      ocean.addColorStop(1, '#020d07');
+      ctx.fillStyle = ocean;
       ctx.fillRect(0, 0, W, H);
 
-      // ── Lat/lon grid ──────────────────────────────────────────────────────
-      // Latitude parallels every 30°
+      // ── Subtle ocean grid (very faint graticule) ────────────────────────
+      const STEPS = 100;
+      ctx.globalAlpha = 0.08;
+      ctx.strokeStyle = '#00E5A0';
+      ctx.lineWidth = 0.5;
+
       for (let latDeg = -60; latDeg <= 60; latDeg += 30) {
-        const lat = latDeg * (Math.PI / 180);
-        const isEquator = latDeg === 0;
-        ctx.lineWidth  = isEquator ? 1.2 : 0.7;
-        ctx.strokeStyle = isEquator
-          ? 'rgba(0, 229, 160, 0.35)'
-          : 'rgba(0, 229, 160, 0.18)';
+        const lat = latDeg * DEG2RAD;
         ctx.beginPath();
         let penDown = false;
         for (let i = 0; i <= STEPS; i++) {
@@ -138,11 +182,8 @@ function GlobeCanvas() {
         ctx.stroke();
       }
 
-      // Longitude meridians every 30°
       for (let lonDeg = 0; lonDeg < 360; lonDeg += 30) {
-        const lonBase = lonDeg * (Math.PI / 180) + lonOffset;
-        ctx.lineWidth  = 0.7;
-        ctx.strokeStyle = 'rgba(0, 229, 160, 0.18)';
+        const lonBase = lonDeg * DEG2RAD + lonOffset;
         ctx.beginPath();
         let penDown = false;
         for (let i = 0; i <= STEPS; i++) {
@@ -158,54 +199,97 @@ function GlobeCanvas() {
         }
         ctx.stroke();
       }
+      ctx.globalAlpha = 1;
 
-      // ── City lights ───────────────────────────────────────────────────────
+      // ── Continent fills ─────────────────────────────────────────────────
+      // Land: subtle elevation from ocean with soft green tint
+      ctx.fillStyle = 'rgba(14, 62, 38, 0.65)';
+      for (const poly of CONTINENTS) {
+        drawContinentPolygon(ctx, poly, cx, cy, R, lonOffset);
+      }
+
+      // Continent edges — thin bright stroke for definition
+      ctx.strokeStyle = 'rgba(0, 229, 160, 0.14)';
+      ctx.lineWidth = 0.8;
+      for (const poly of CONTINENTS) {
+        drawContinentPolygon(ctx, poly, cx, cy, R, lonOffset);
+        ctx.stroke();
+      }
+
+      // Second pass: brighter interior fill near the center for depth
+      const landHighlight = ctx.createRadialGradient(
+        cx - R * 0.2, cy - R * 0.15, R * 0.1,
+        cx, cy, R,
+      );
+      landHighlight.addColorStop(0, 'rgba(20, 80, 50, 0.30)');
+      landHighlight.addColorStop(0.5, 'rgba(12, 55, 35, 0.12)');
+      landHighlight.addColorStop(1, 'rgba(8, 35, 22, 0.00)');
+      ctx.fillStyle = landHighlight;
+      for (const poly of CONTINENTS) {
+        drawContinentPolygon(ctx, poly, cx, cy, R, lonOffset);
+      }
+
+      // ── City lights ─────────────────────────────────────────────────────
       for (const [latDeg, lonDeg] of CITY_LIGHTS) {
-        const lat = latDeg * (Math.PI / 180);
-        const lon = lonDeg * (Math.PI / 180);
+        const lat = latDeg * DEG2RAD;
+        const lon = lonDeg * DEG2RAD;
         const x3 = Math.cos(lat) * Math.sin(lon + lonOffset);
         const y3 = -Math.sin(lat);
         const z3 = Math.cos(lat) * Math.cos(lon + lonOffset);
-        if (z3 < 0.04) continue;
+        if (z3 < 0.05) continue;
 
-        const sx  = cx + x3 * R;
-        const sy  = cy + y3 * R;
-        const alpha = z3 * 0.8 + 0.2;
-        const dotR  = (z3 * 2.2 + 0.8) * (R / 400);
+        const sx = cx + x3 * R;
+        const sy = cy + y3 * R;
+        const alpha = z3 * 0.7 + 0.2;
+        const dotR = (z3 * 1.8 + 0.6) * (R / 400);
 
-        const glow = ctx.createRadialGradient(sx, sy, 0, sx, sy, dotR * 7);
-        glow.addColorStop(0,   `rgba(0, 229, 160, ${(alpha * 0.7).toFixed(2)})`);
-        glow.addColorStop(0.4, `rgba(0, 229, 160, ${(alpha * 0.18).toFixed(2)})`);
-        glow.addColorStop(1,   'rgba(0, 229, 160, 0)');
+        // Soft glow halo
+        const glow = ctx.createRadialGradient(sx, sy, 0, sx, sy, dotR * 6);
+        glow.addColorStop(0, `rgba(0, 229, 160, ${(alpha * 0.55).toFixed(2)})`);
+        glow.addColorStop(0.35, `rgba(0, 229, 160, ${(alpha * 0.12).toFixed(2)})`);
+        glow.addColorStop(1, 'rgba(0, 229, 160, 0)');
         ctx.beginPath();
-        ctx.arc(sx, sy, dotR * 7, 0, Math.PI * 2);
+        ctx.arc(sx, sy, dotR * 6, 0, Math.PI * 2);
         ctx.fillStyle = glow;
         ctx.fill();
 
+        // Bright center dot
         ctx.beginPath();
-        ctx.arc(sx, sy, dotR, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(220, 255, 240, ${alpha.toFixed(2)})`;
+        ctx.arc(sx, sy, dotR * 0.8, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(200, 255, 230, ${alpha.toFixed(2)})`;
         ctx.fill();
       }
 
-      // ── Night-side shadow ─────────────────────────────────────────────────
-      const shadow = ctx.createRadialGradient(
-        cx + R * 0.42, cy, R * 0.08,
-        cx + R * 0.42, cy, R * 1.0
+      // ── Specular highlight (subtle light reflection on sphere) ──────────
+      const spec = ctx.createRadialGradient(
+        cx - R * 0.35, cy - R * 0.3, R * 0.02,
+        cx - R * 0.2, cy - R * 0.15, R * 0.6,
       );
-      shadow.addColorStop(0,    'rgba(1, 4, 2, 0.72)');
-      shadow.addColorStop(0.45, 'rgba(1, 4, 2, 0.28)');
-      shadow.addColorStop(1,    'rgba(1, 4, 2, 0.00)');
+      spec.addColorStop(0, 'rgba(180, 255, 220, 0.04)');
+      spec.addColorStop(0.3, 'rgba(120, 230, 180, 0.02)');
+      spec.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = spec;
+      ctx.fillRect(0, 0, W, H);
+
+      // ── Night-side shadow ───────────────────────────────────────────────
+      const shadow = ctx.createRadialGradient(
+        cx + R * 0.45, cy + R * 0.05, R * 0.05,
+        cx + R * 0.35, cy, R * 1.05,
+      );
+      shadow.addColorStop(0, 'rgba(1, 4, 2, 0.75)');
+      shadow.addColorStop(0.35, 'rgba(1, 4, 2, 0.35)');
+      shadow.addColorStop(0.7, 'rgba(1, 4, 2, 0.10)');
+      shadow.addColorStop(1, 'rgba(1, 4, 2, 0.00)');
       ctx.fillStyle = shadow;
       ctx.fillRect(0, 0, W, H);
 
       ctx.restore();
 
-      // ── Globe outline ring ────────────────────────────────────────────────
+      // ── Globe outline ring ──────────────────────────────────────────────
       ctx.beginPath();
       ctx.arc(cx, cy, R, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(0, 229, 160, 0.22)';
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = 'rgba(0, 229, 160, 0.18)';
+      ctx.lineWidth = 1.2;
       ctx.stroke();
 
       animId = requestAnimationFrame(draw);
@@ -215,10 +299,13 @@ function GlobeCanvas() {
 
     return () => {
       cancelAnimationFrame(animId);
+      canvas.removeEventListener('mousedown', onMouseDown);
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
     };
   }, []);
 
-  return <canvas ref={canvasRef} className="globe-canvas" aria-hidden="true" />;
+  return <canvas ref={canvasRef} className="globe-canvas" />;
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
@@ -300,10 +387,12 @@ export default function Paulze() {
             <p className="section-subtitle reveal">
               Unsold crop protection products often sit until they pass expiry — destroying value for manufacturers and leaving distributors without access to discounted supply.
             </p>
-            <div className="problem-stat-block reveal">
-              <div className="problem-stat">$4B+</div>
-              <p>Estimated value of crop protection chemicals that expire or are written off annually.</p>
+            <div className="problem-stat-inline reveal">
+              <span className="problem-stat">$4B+</span>
             </div>
+            <p className="problem-stat-desc reveal">
+              Estimated value of crop protection chemicals that expire or are written off annually.
+            </p>
             <div className="problem-cards">
               <div className="problem-card reveal" style={{ '--d': '0s' } as React.CSSProperties}>
                 <h3>Manufacturers lose margin</h3>
@@ -459,12 +548,16 @@ export default function Paulze() {
         </section>
 
         <footer>
-          <div className="container">
+          <div className="container footer-inner">
             <div className="footer-brand">
               <a href="/" className="logo-link">
                 <img src={paulzeLogo} alt="Paulze" className="logo-img" />
               </a>
-              <p>B2B marketplace for near-expiry crop protection chemicals.</p>
+              <p>B2B marketplace for near-expiry crop protection chemicals. Connect with us to list or buy.</p>
+            </div>
+            <div className="footer-contact">
+              <h4>Contact</h4>
+              <a href="mailto:team@paulze.com">team@paulze.com</a>
             </div>
           </div>
         </footer>
