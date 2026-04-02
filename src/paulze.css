@@ -177,6 +177,70 @@ header {
   z-index: 0;
 }
 
+/* Animated floating glow blobs — atmospheric background behind globe */
+.hero-glow {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  will-change: transform, opacity;
+  mix-blend-mode: screen;
+}
+
+.hero-glow-a {
+  width: 600px;
+  height: 600px;
+  top: 5%;
+  left: 8%;
+  background: radial-gradient(circle, rgba(0, 229, 160, 0.35) 0%, rgba(0, 229, 160, 0.08) 45%, transparent 70%);
+  filter: blur(60px);
+  animation: glowDrift-a 14s ease-in-out infinite;
+}
+
+.hero-glow-b {
+  width: 500px;
+  height: 500px;
+  bottom: 8%;
+  right: 5%;
+  background: radial-gradient(circle, rgba(0, 200, 140, 0.30) 0%, rgba(0, 200, 140, 0.06) 50%, transparent 70%);
+  filter: blur(50px);
+  animation: glowDrift-b 18s ease-in-out infinite;
+}
+
+.hero-glow-c {
+  width: 450px;
+  height: 450px;
+  top: 40%;
+  left: 50%;
+  background: radial-gradient(circle, rgba(0, 255, 180, 0.25) 0%, rgba(0, 229, 160, 0.05) 50%, transparent 70%);
+  filter: blur(70px);
+  animation: glowDrift-c 22s ease-in-out infinite;
+}
+
+@keyframes glowDrift-a {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.8; }
+  25%      { transform: translate(60px, -50px) scale(1.12); opacity: 1; }
+  50%      { transform: translate(30px, 40px) scale(0.95); opacity: 0.7; }
+  75%      { transform: translate(-40px, -20px) scale(1.05); opacity: 0.9; }
+}
+
+@keyframes glowDrift-b {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.7; }
+  25%      { transform: translate(-50px, 30px) scale(1.15); opacity: 1; }
+  50%      { transform: translate(40px, -40px) scale(0.9); opacity: 0.6; }
+  75%      { transform: translate(-20px, 50px) scale(1.08); opacity: 0.85; }
+}
+
+@keyframes glowDrift-c {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.6; }
+  25%      { transform: translate(45px, 35px) scale(1.1); opacity: 0.9; }
+  50%      { transform: translate(-35px, -25px) scale(0.92); opacity: 0.5; }
+  75%      { transform: translate(25px, -40px) scale(1.06); opacity: 0.8; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-glow { animation: none; }
+}
+
 /* Canvas-drawn rotating globe — centered behind the hero text */
 .globe-canvas {
   position: absolute;

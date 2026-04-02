@@ -34,6 +34,11 @@ const DEG2RAD = Math.PI / 180;
  * edge so the polygon naturally hugs the silhouette — no arcs, no chords,
  * no direction ambiguity, no edge glitches.
  */
+/** Rotate a 3D point around the X-axis by angle a (for vertical tilt). */
+function rotX(x: number, y: number, z: number, cosA: number, sinA: number) {
+  return { x, y: y * cosA - z * sinA, z: y * sinA + z * cosA };
+}
+
 function drawContinentPolygon(
   ctx: CanvasRenderingContext2D,
   polygon: Polygon,
@@ -41,6 +46,8 @@ function drawContinentPolygon(
   cy: number,
   R: number,
   lonOffset: number,
+  latCos: number,
+  latSin: number,
 ) {
   const Z_CLIP = 0.12; // fade-out zone slightly inside the silhouette
 
@@ -48,9 +55,10 @@ function drawContinentPolygon(
   const projected = polygon.map(([latDeg, lonDeg]) => {
     const lat = latDeg * DEG2RAD;
     const lon = lonDeg * DEG2RAD + lonOffset;
-    const x = Math.cos(lat) * Math.sin(lon);
-    const y = -Math.sin(lat);
-    const z = Math.cos(lat) * Math.cos(lon);
+    const x0 = Math.cos(lat) * Math.sin(lon);
+    const y0 = -Math.sin(lat);
+    const z0 = Math.cos(lat) * Math.cos(lon);
+    const { x, y, z } = rotX(x0, y0, z0, latCos, latSin);
 
     if (z > Z_CLIP) {
       anyVisible = true;
@@ -86,26 +94,36 @@ function GlobeCanvas() {
 
     let animId: number;
     let lonOffset = 0;
+    let latOffset = 0;
     let rotSpeed = 0.0018; // base auto-rotation speed (rad/frame)
-    let dragVelX = 0;      // velocity from mouse drag
+    let dragVelX = 0;      // velocity from mouse drag (horizontal)
+    let dragVelY = 0;      // velocity from mouse drag (vertical)
     let isDragging = false;
     let lastMouseX = 0;
+    let lastMouseY = 0;
+
+    const MAX_LAT = Math.PI * 0.45; // clamp vertical tilt to ~81°
 
     // ── Mouse interaction ──────────────────────────────────────────────
     function onMouseDown(e: MouseEvent) {
       isDragging = true;
       lastMouseX = e.clientX;
+      lastMouseY = e.clientY;
       dragVelX = 0;
+      dragVelY = 0;
     }
     function onMouseMove(e: MouseEvent) {
       if (!isDragging) return;
       const dx = e.clientX - lastMouseX;
+      const dy = e.clientY - lastMouseY;
       dragVelX = dx * 0.005;    // map px to radians
+      dragVelY = -dy * 0.005;
       lastMouseX = e.clientX;
+      lastMouseY = e.clientY;
     }
     function onMouseUp() {
       isDragging = false;
-      // dragVelX carries momentum, decays each frame
+      // dragVelX/Y carry momentum, decay each frame
     }
 
     canvas.style.pointerEvents = 'auto';
@@ -126,11 +144,20 @@ function GlobeCanvas() {
       // Apply rotation: auto-spin + drag momentum
       if (isDragging) {
         lonOffset += dragVelX;
+        latOffset += dragVelY;
       } else {
         // Decay drag velocity toward zero, blend back to auto-spin
         dragVelX *= 0.95;
+        dragVelY *= 0.95;
         lonOffset += rotSpeed + dragVelX;
+        latOffset += dragVelY;
       }
+      // Clamp vertical tilt
+      latOffset = Math.max(-MAX_LAT, Math.min(MAX_LAT, latOffset));
+
+      // Pre-compute lat tilt trig (used by all projection)
+      const latCos = Math.cos(latOffset);
+      const latSin = Math.sin(latOffset);
 
       // ── Atmosphere outer glow ───────────────────────────────────────────
       const atmo = ctx.createRadialGradient(cx, cy, R * 0.92, cx, cy, R * 1.18);
@@ -171,11 +198,13 @@ function GlobeCanvas() {
         let penDown = false;
         for (let i = 0; i <= STEPS; i++) {
           const lon = (i / STEPS) * Math.PI * 2 + lonOffset;
-          const x3 = Math.cos(lat) * Math.sin(lon);
-          const z3 = Math.cos(lat) * Math.cos(lon);
-          if (z3 < 0) { penDown = false; continue; }
-          const sx = cx + x3 * R;
-          const sy = cy + (-Math.sin(lat)) * R;
+          const x0 = Math.cos(lat) * Math.sin(lon);
+          const y0 = -Math.sin(lat);
+          const z0 = Math.cos(lat) * Math.cos(lon);
+          const p = rotX(x0, y0, z0, latCos, latSin);
+          if (p.z < 0) { penDown = false; continue; }
+          const sx = cx + p.x * R;
+          const sy = cy + p.y * R;
           if (!penDown) { ctx.moveTo(sx, sy); penDown = true; }
           else ctx.lineTo(sx, sy);
         }
@@ -188,12 +217,13 @@ function GlobeCanvas() {
         let penDown = false;
         for (let i = 0; i <= STEPS; i++) {
           const lat = (i / STEPS) * Math.PI - Math.PI / 2;
-          const x3 = Math.cos(lat) * Math.sin(lonBase);
-          const y3 = -Math.sin(lat);
-          const z3 = Math.cos(lat) * Math.cos(lonBase);
-          if (z3 < 0) { penDown = false; continue; }
-          const sx = cx + x3 * R;
-          const sy = cy + y3 * R;
+          const x0 = Math.cos(lat) * Math.sin(lonBase);
+          const y0 = -Math.sin(lat);
+          const z0 = Math.cos(lat) * Math.cos(lonBase);
+          const p = rotX(x0, y0, z0, latCos, latSin);
+          if (p.z < 0) { penDown = false; continue; }
+          const sx = cx + p.x * R;
+          const sy = cy + p.y * R;
           if (!penDown) { ctx.moveTo(sx, sy); penDown = true; }
           else ctx.lineTo(sx, sy);
         }
@@ -205,14 +235,14 @@ function GlobeCanvas() {
       // Land: subtle elevation from ocean with soft green tint
       ctx.fillStyle = 'rgba(14, 62, 38, 0.65)';
       for (const poly of CONTINENTS) {
-        drawContinentPolygon(ctx, poly, cx, cy, R, lonOffset);
+        drawContinentPolygon(ctx, poly, cx, cy, R, lonOffset, latCos, latSin);
       }
 
       // Continent edges — thin bright stroke for definition
       ctx.strokeStyle = 'rgba(0, 229, 160, 0.14)';
       ctx.lineWidth = 0.8;
       for (const poly of CONTINENTS) {
-        drawContinentPolygon(ctx, poly, cx, cy, R, lonOffset);
+        drawContinentPolygon(ctx, poly, cx, cy, R, lonOffset, latCos, latSin);
         ctx.stroke();
       }
 
@@ -226,22 +256,23 @@ function GlobeCanvas() {
       landHighlight.addColorStop(1, 'rgba(8, 35, 22, 0.00)');
       ctx.fillStyle = landHighlight;
       for (const poly of CONTINENTS) {
-        drawContinentPolygon(ctx, poly, cx, cy, R, lonOffset);
+        drawContinentPolygon(ctx, poly, cx, cy, R, lonOffset, latCos, latSin);
       }
 
       // ── City lights ─────────────────────────────────────────────────────
       for (const [latDeg, lonDeg] of CITY_LIGHTS) {
         const lat = latDeg * DEG2RAD;
         const lon = lonDeg * DEG2RAD;
-        const x3 = Math.cos(lat) * Math.sin(lon + lonOffset);
-        const y3 = -Math.sin(lat);
-        const z3 = Math.cos(lat) * Math.cos(lon + lonOffset);
-        if (z3 < 0.05) continue;
+        const x0 = Math.cos(lat) * Math.sin(lon + lonOffset);
+        const y0 = -Math.sin(lat);
+        const z0 = Math.cos(lat) * Math.cos(lon + lonOffset);
+        const cp = rotX(x0, y0, z0, latCos, latSin);
+        if (cp.z < 0.05) continue;
 
-        const sx = cx + x3 * R;
-        const sy = cy + y3 * R;
-        const alpha = z3 * 0.7 + 0.2;
-        const dotR = (z3 * 1.8 + 0.6) * (R / 400);
+        const sx = cx + cp.x * R;
+        const sy = cy + cp.y * R;
+        const alpha = cp.z * 0.7 + 0.2;
+        const dotR = (cp.z * 1.8 + 0.6) * (R / 400);
 
         // Soft glow halo
         const glow = ctx.createRadialGradient(sx, sy, 0, sx, sy, dotR * 6);
@@ -361,6 +392,9 @@ export default function Paulze() {
         <section className="hero">
           {/* ── Layered animated background ── */}
           <div className="hero-bg" aria-hidden="true">
+            <div className="hero-glow hero-glow-a" />
+            <div className="hero-glow hero-glow-b" />
+            <div className="hero-glow hero-glow-c" />
             <GlobeCanvas />
             <div className="hero-vignette" />
           </div>
