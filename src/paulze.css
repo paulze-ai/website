@@ -634,17 +634,19 @@ body {
   white-space: nowrap;
 }
 
-.hero-cycle {
+.typewriter {
+  display: inline;
+}
+.typewriter-cursor {
   display: inline-block;
-  transition: opacity 0.4s ease, transform 0.4s ease;
+  font-weight: 300;
+  animation: blink-cursor 0.7s step-end infinite;
+  margin-left: 1px;
+  -webkit-text-fill-color: var(--accent);
 }
-.hero-cycle-in {
-  opacity: 1;
-  transform: translateY(0);
-}
-.hero-cycle-out {
-  opacity: 0;
-  transform: translateY(8px);
+@keyframes blink-cursor {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0; }
 }
 
 @keyframes textShimmer {

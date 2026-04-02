@@ -431,18 +431,41 @@ export default function Paulze() {
   const [pageProgress, setPageProgress] = useState(0);
 
   const HERO_PHRASES = ['No waste.', 'No write-offs.', 'No grey market.'];
-  const [heroPhrase, setHeroPhrase] = useState(0);
-  const [heroFading, setHeroFading] = useState(false);
+  const [typedText, setTypedText] = useState('');
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setHeroFading(true);
-      setTimeout(() => {
-        setHeroPhrase(i => (i + 1) % HERO_PHRASES.length);
-        setHeroFading(false);
-      }, 400);
-    }, 3000);
-    return () => clearInterval(interval);
+    let phraseIdx = 0;
+    let charIdx = 0;
+    let deleting = false;
+    let timer: ReturnType<typeof setTimeout>;
+
+    function tick() {
+      const phrase = HERO_PHRASES[phraseIdx];
+      if (!deleting) {
+        charIdx++;
+        setTypedText(phrase.slice(0, charIdx));
+        if (charIdx === phrase.length) {
+          // Pause at full phrase, then start deleting
+          timer = setTimeout(() => { deleting = true; tick(); }, 2000);
+          return;
+        }
+        timer = setTimeout(tick, 80);
+      } else {
+        charIdx--;
+        setTypedText(phrase.slice(0, charIdx));
+        if (charIdx === 0) {
+          deleting = false;
+          phraseIdx = (phraseIdx + 1) % HERO_PHRASES.length;
+          timer = setTimeout(tick, 400);
+          return;
+        }
+        timer = setTimeout(tick, 40);
+      }
+    }
+
+    // Start after initial entrance animation
+    timer = setTimeout(tick, 1500);
+    return () => clearTimeout(timer);
   }, []);
 
   const [email, setEmail] = useState('');
@@ -562,7 +585,7 @@ export default function Paulze() {
 
       <header id="header" className="floating-header">
         <div className="floating-nav-pill">
-          <a href="/" className="logo-link">
+          <a href="#" className="logo-link" onClick={e => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
             <img src={paulzeLogo} alt="Paulze" className="logo-img" />
           </a>
           <nav className="pill-nav">
@@ -591,7 +614,7 @@ export default function Paulze() {
 
           <div className="container hero-content">
             <span className="hero-badge hero-enter hero-enter-badge">B2B Marketplace</span>
-            <h1 className="hero-enter hero-enter-h1">Liquidate near-expiry crop protection. <span className={`no-wrap hero-cycle ${heroFading ? 'hero-cycle-out' : 'hero-cycle-in'}`}>{HERO_PHRASES[heroPhrase]}</span></h1>
+            <h1 className="hero-enter hero-enter-h1">Liquidate near-expiry crop protection.<br /><span className="no-wrap typewriter">{typedText}<span className="typewriter-cursor" aria-hidden="true">|</span></span></h1>
             <p className="hero-tagline hero-enter hero-enter-tagline">
               Paulze connects agrochemical manufacturers with vetted distributors to move soon-to-expire inventory at fair prices — so nothing goes to waste.
             </p>
