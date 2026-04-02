@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import LinkedInIcon from './assets/linkedin.svg?react';
 import paulzeLogo from './assets/logo_no_black.svg';
 import mattPhoto from './assets/matthew-fallon.png';
@@ -188,9 +188,9 @@ function GlobeCanvas() {
 
       // ── Subtle ocean grid (very faint graticule) ────────────────────────
       const STEPS = 100;
-      ctx.globalAlpha = 0.08;
+      ctx.globalAlpha = 0.18;
       ctx.strokeStyle = '#00E5A0';
-      ctx.lineWidth = 0.5;
+      ctx.lineWidth = 0.7;
 
       for (let latDeg = -60; latDeg <= 60; latDeg += 30) {
         const lat = latDeg * DEG2RAD;
@@ -339,9 +339,124 @@ function GlobeCanvas() {
   return <canvas ref={canvasRef} className="globe-canvas" />;
 }
 
+// ─── 3D Tilt Effect ──────────────────────────────────────────────────────────
+
+function useTiltCards() {
+  useEffect(() => {
+    const cards = document.querySelectorAll<HTMLElement>('.tilt-card');
+
+    function onMove(this: HTMLElement, e: MouseEvent) {
+      const rect = this.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width - 0.5;   // -0.5 to 0.5
+      const y = (e.clientY - rect.top) / rect.height - 0.5;
+      this.style.transform = `perspective(800px) rotateY(${x * 14}deg) rotateX(${-y * 14}deg)`;
+      this.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
+      this.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+    }
+    function onLeave(this: HTMLElement) {
+      this.style.transform = '';
+    }
+
+    cards.forEach(card => {
+      card.addEventListener('mousemove', onMove);
+      card.addEventListener('mouseleave', onLeave);
+    });
+    return () => {
+      cards.forEach(card => {
+        card.removeEventListener('mousemove', onMove);
+        card.removeEventListener('mouseleave', onLeave);
+      });
+    };
+  }, []);
+}
+
+// ─── Animated Counter ────────────────────────────────────────────────────────
+
+function useAnimatedCounter(ref: React.RefObject<HTMLElement | null>) {
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        io.disconnect();
+
+        const duration = 3000;
+        const target = 4_000_000_000;
+        const start = performance.now();
+
+        function format(n: number): string {
+          if (n >= 1_000_000_000) {
+            const b = Math.min(n / 1_000_000_000, 3.9);
+            return `$${b.toFixed(1)}B+`;
+          }
+          if (n >= 1_000_000) return `$${Math.round(n / 1_000_000)}M+`;
+          if (n >= 1_000) return `$${Math.round(n / 1_000)}K+`;
+          return `$${n}`;
+        }
+
+        function tick(now: number) {
+          const elapsed = now - start;
+          const progress = Math.min(elapsed / duration, 1);
+          // Ease-out cubic
+          const eased = 1 - Math.pow(1 - progress, 3);
+          const value = Math.round(eased * target);
+          el!.textContent = eased > 0.99 ? '$4B+' : format(value);
+          if (progress < 1) requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+      },
+      { threshold: 0.5 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [ref]);
+}
+
+function useSimpleCounter(ref: React.RefObject<HTMLElement | null>, target: number, suffix: string, duration = 2500) {
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        io.disconnect();
+        const start = performance.now();
+        function tick(now: number) {
+          const progress = Math.min((now - start) / duration, 1);
+          const eased = 1 - Math.pow(1 - progress, 3);
+          const value = Math.round(eased * target);
+          el!.textContent = `${value}${suffix}`;
+          if (progress < 1) requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+      },
+      { threshold: 0.5 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [ref, target, suffix, duration]);
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
+const STEPS = [
+  { num: 'Step 1', title: 'Manufacturers list SKUs', desc: 'Submit near-expiry crop protection SKUs and volumes. We handle pricing and matching.' },
+  { num: 'Step 2', title: 'Paulze brokers the deal', desc: 'We connect you with vetted distributors and facilitate terms, documentation, and logistics.' },
+  { num: 'Step 3', title: 'Distributors buy at discount', desc: 'Distributors purchase at a discount for short-cycle use — product moves, everyone wins.' },
+];
+
 export default function Paulze() {
+  const statRef = useRef<HTMLSpanElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [activeStep, setActiveStep] = useState(0);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [activeSection, setActiveSection] = useState('');
+
+  useAnimatedCounter(statRef);
+  useTiltCards();
+
   useEffect(() => {
     const header = document.getElementById('header') as HTMLElement;
     const logoImg = header.querySelector<HTMLImageElement>('.logo-img');
@@ -357,7 +472,7 @@ export default function Paulze() {
   }, []);
 
   useEffect(() => {
-    const els = document.querySelectorAll('.reveal');
+    const els = document.querySelectorAll('.reveal, .reveal-slide');
     const io = new IntersectionObserver(
       entries => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); }),
       { threshold: 0.08, rootMargin: '0px 0px -40px 0px' }
@@ -366,9 +481,63 @@ export default function Paulze() {
     return () => io.disconnect();
   }, []);
 
+  // Scrollspy for floating nav
+  useEffect(() => {
+    const ids = ['problem', 'how-it-works', 'benefits', 'co-founders', 'contact'];
+    const io = new IntersectionObserver(
+      entries => {
+        for (const e of entries) {
+          if (e.isIntersecting) setActiveSection(e.target.id);
+        }
+      },
+      { threshold: 0.3 },
+    );
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) io.observe(el);
+    });
+    return () => io.disconnect();
+  }, []);
+
+  // Sticky scroll tracking for "How It Works"
+  useEffect(() => {
+    function onScroll() {
+      const container = scrollContainerRef.current;
+      if (!container) return;
+      const rect = container.getBoundingClientRect();
+      const scrollable = container.offsetHeight - window.innerHeight;
+      if (scrollable <= 0) return;
+      const progress = Math.max(0, Math.min(1, -rect.top / scrollable));
+      setScrollProgress(progress * 100);
+      setActiveStep(Math.min(2, Math.floor(progress * 3)));
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
   return (
     <>
       <div className="grain" aria-hidden="true" />
+
+      {/* Floating scrollspy nav */}
+      <nav className="scroll-nav" aria-label="Page sections">
+        {[
+          { id: 'problem', label: 'Problem' },
+          { id: 'how-it-works', label: 'How It Works' },
+          { id: 'benefits', label: 'Benefits' },
+          { id: 'co-founders', label: 'Team' },
+          { id: 'contact', label: 'Contact' },
+        ].map(s => (
+          <a
+            key={s.id}
+            href={`#${s.id}`}
+            className={`scroll-nav-dot ${activeSection === s.id ? 'active' : ''}`}
+            title={s.label}
+          >
+            <span className="scroll-nav-label">{s.label}</span>
+          </a>
+        ))}
+      </nav>
 
       <header id="header">
         <div className="header-inner">
@@ -400,18 +569,18 @@ export default function Paulze() {
           </div>
 
           <div className="container hero-content">
-            <span className="hero-badge">B2B Marketplace</span>
-            <h1>Liquidate near-expiry crop protection. <span>No waste.</span></h1>
-            <p className="hero-tagline">
+            <span className="hero-badge hero-enter hero-enter-badge">B2B Marketplace</span>
+            <h1 className="hero-enter hero-enter-h1">Liquidate near-expiry crop protection. <span>No waste.</span></h1>
+            <p className="hero-tagline hero-enter hero-enter-tagline">
               Paulze connects agrochemical manufacturers with vetted distributors to move soon-to-expire inventory at fair prices — so nothing goes to waste.
             </p>
+            <a href="#contact" className="hero-cta hero-enter hero-enter-cta">Get in Touch</a>
           </div>
         </section>
 
-        {/* Section glow divider */}
-        <div className="relative h-px w-full overflow-visible">
-          <div className="absolute left-1/2 top-1/2 h-[2px] w-[60%] -translate-x-1/2 -translate-y-1/2 bg-[linear-gradient(90deg,transparent,rgba(0,229,160,0.3),rgba(0,229,160,0.5),rgba(0,229,160,0.3),transparent)] blur-[1px]" />
-          <div className="absolute left-1/2 top-1/2 h-[40px] w-[50%] -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(ellipse_at_center,rgba(0,229,160,0.08),transparent_70%)] blur-xl" />
+        <div className="section-divider" aria-hidden="true">
+          <div className="section-divider-line" />
+          <div className="section-divider-glow" />
         </div>
 
         <section id="problem" className="problem">
@@ -422,21 +591,21 @@ export default function Paulze() {
               Unsold crop protection products often sit until they pass expiry — destroying value for manufacturers and leaving distributors without access to discounted supply.
             </p>
             <div className="problem-stat-inline reveal">
-              <span className="problem-stat">$4B+</span>
+              <span className="problem-stat" ref={statRef}>$0B+</span>
             </div>
             <p className="problem-stat-desc reveal">
               Estimated value of crop protection chemicals that expire or are written off annually.
             </p>
             <div className="problem-cards">
-              <div className="problem-card reveal" style={{ '--d': '0s' } as React.CSSProperties}>
+              <div className="problem-card tilt-card reveal-slide" style={{ '--d': '0s' } as React.CSSProperties}>
                 <h3>Manufacturers lose margin</h3>
                 <p>Excess inventory and write-offs hurt profitability and complicate planning.</p>
               </div>
-              <div className="problem-card reveal" style={{ '--d': '0.1s' } as React.CSSProperties}>
+              <div className="problem-card tilt-card reveal-slide" style={{ '--d': '0.15s' } as React.CSSProperties}>
                 <h3>Distributors miss deals</h3>
                 <p>No trusted channel to source near-expiry product at discount for short-cycle use.</p>
               </div>
-              <div className="problem-card reveal" style={{ '--d': '0.2s' } as React.CSSProperties}>
+              <div className="problem-card tilt-card reveal-slide" style={{ '--d': '0.3s' } as React.CSSProperties}>
                 <h3>Environment pays the cost</h3>
                 <p>Unused chemicals add to waste and disposal burden when they could still be used safely.</p>
               </div>
@@ -444,47 +613,79 @@ export default function Paulze() {
           </div>
         </section>
 
-        {/* Section glow divider */}
-        <div className="relative h-px w-full overflow-visible">
-          <div className="absolute left-1/2 top-1/2 h-[2px] w-[50%] -translate-x-1/2 -translate-y-1/2 bg-[linear-gradient(90deg,transparent,rgba(0,229,160,0.25),rgba(0,229,160,0.4),rgba(0,229,160,0.25),transparent)] blur-[1px]" />
-          <div className="absolute left-1/2 top-1/2 h-[30px] w-[40%] -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(ellipse_at_center,rgba(0,229,160,0.06),transparent_70%)] blur-xl" />
+        <div className="section-divider" aria-hidden="true">
+          <div className="section-divider-line" />
+          <div className="section-divider-glow" />
         </div>
 
-        <section id="how-it-works" className="relative overflow-hidden">
-          {/* Subtle ambient glow */}
+        {/* ── Sticky Scroll: How It Works (desktop) ── */}
+        <section id="how-it-works" className="relative hidden md:block">
           <div className="pointer-events-none absolute -right-[20%] top-[10%] h-[60%] w-[40%] rounded-full bg-[radial-gradient(circle,rgba(0,229,160,0.05)_0%,transparent_70%)] blur-3xl" aria-hidden="true" />
-          <div className="container">
-            <p className="section-label reveal">How It Works</p>
-            <h2 className="section-title reveal">Three steps to liquidate and buy</h2>
-            <p className="section-subtitle reveal">
-              We broker the deal so manufacturers recover value and distributors get vetted product at a discount.
-            </p>
-            <div className="steps">
-              <div className="step reveal" style={{ '--d': '0s' } as React.CSSProperties}>
-                <div className="step-num">Step 1</div>
-                <span className="step-arrow" aria-hidden="true">→</span>
-                <h3>Manufacturers list SKUs</h3>
-                <p>Submit near-expiry crop protection SKUs and volumes. We handle pricing and matching.</p>
-              </div>
-              <div className="step reveal" style={{ '--d': '0.12s' } as React.CSSProperties}>
-                <div className="step-num">Step 2</div>
-                <span className="step-arrow" aria-hidden="true">→</span>
-                <h3>Paulze brokers the deal</h3>
-                <p>We connect you with vetted distributors and facilitate terms, documentation, and logistics.</p>
-              </div>
-              <div className="step reveal" style={{ '--d': '0.24s' } as React.CSSProperties}>
-                <div className="step-num">Step 3</div>
-                <h3>Distributors buy at discount</h3>
-                <p>Distributors purchase at a discount for short-cycle use — product moves, everyone wins.</p>
+          <div ref={scrollContainerRef} className="relative min-h-[300vh]">
+            <div className="sticky top-0 flex min-h-screen items-center overflow-hidden py-24">
+              <div className="container">
+                <p className="section-label">How It Works</p>
+                <h2 className="section-title mb-4">Three steps to liquidate and buy</h2>
+                <p className="section-subtitle mb-12">
+                  We broker the deal so manufacturers recover value and distributors get vetted product at a discount.
+                </p>
+
+                <div className="relative pl-12">
+                  {/* Track */}
+                  <div className="absolute left-[7px] top-0 h-full w-px bg-[rgba(0,229,160,0.1)]" />
+                  {/* Active fill */}
+                  <div
+                    className="absolute left-[7px] top-0 w-px bg-[var(--accent)]"
+                    style={{ height: `${scrollProgress}%`, transition: 'height 0.1s ease-out' }}
+                  />
+
+                  {STEPS.map((step, i) => (
+                    <div
+                      key={i}
+                      className={`relative mb-16 last:mb-0 transition-all duration-500 ${
+                        activeStep >= i ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-20'
+                      }`}
+                    >
+                      {/* Dot */}
+                      <div className={`absolute -left-12 top-1.5 h-3.5 w-3.5 rounded-full border-2 transition-all duration-300 ${
+                        activeStep >= i
+                          ? 'border-[var(--accent)] bg-[var(--accent)] shadow-[0_0_12px_rgba(0,229,160,0.5)]'
+                          : 'border-[rgba(0,229,160,0.2)] bg-transparent'
+                      }`} />
+                      <div className="step-num">{step.num}</div>
+                      <h3 className="text-lg font-semibold text-[var(--text)] mb-2">{step.title}</h3>
+                      <p className="text-[var(--text-muted)] text-sm leading-relaxed max-w-lg">{step.desc}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Section glow divider */}
-        <div className="relative h-px w-full overflow-visible">
-          <div className="absolute left-1/2 top-1/2 h-[2px] w-[50%] -translate-x-1/2 -translate-y-1/2 bg-[linear-gradient(90deg,transparent,rgba(0,229,160,0.25),rgba(0,229,160,0.4),rgba(0,229,160,0.25),transparent)] blur-[1px]" />
-          <div className="absolute left-1/2 top-1/2 h-[30px] w-[40%] -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(ellipse_at_center,rgba(0,229,160,0.06),transparent_70%)] blur-xl" />
+        {/* ── Mobile fallback: How It Works ── */}
+        <section className="relative overflow-hidden md:hidden">
+          <div className="container py-16">
+            <p className="section-label reveal">How It Works</p>
+            <h2 className="section-title reveal">Three steps to liquidate and buy</h2>
+            <p className="section-subtitle reveal">
+              We broker the deal so manufacturers recover value and distributors get vetted product at a discount.
+            </p>
+            <div className="flex flex-col gap-6">
+              {STEPS.map((step, i) => (
+                <div key={i} className="step tilt-card reveal" style={{ '--d': `${i * 0.12}s` } as React.CSSProperties}>
+                  <div className="step-num">{step.num}</div>
+                  <h3>{step.title}</h3>
+                  <p>{step.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <div className="section-divider" aria-hidden="true">
+          <div className="section-divider-line" />
+          <div className="section-divider-glow" />
         </div>
 
         <section id="benefits" className="benefits">
@@ -527,7 +728,7 @@ export default function Paulze() {
               The team building the marketplace for near-expiry crop protection.
             </p>
             <div className="founders-grid">
-              <article className="founder-card reveal" style={{ '--d': '0s' } as React.CSSProperties}>
+              <article className="founder-card tilt-card reveal" style={{ '--d': '0s' } as React.CSSProperties}>
                 <div className="founder-photo" aria-hidden="true">
                   <img src={meyerPhoto} alt="" />
                 </div>
@@ -538,7 +739,7 @@ export default function Paulze() {
                   LinkedIn
                 </a>
               </article>
-              <article className="founder-card reveal" style={{ '--d': '0.12s' } as React.CSSProperties}>
+              <article className="founder-card tilt-card reveal" style={{ '--d': '0.12s' } as React.CSSProperties}>
                 <div className="founder-photo" aria-hidden="true">
                   <img src={neoPhoto} alt="" />
                 </div>
@@ -549,7 +750,7 @@ export default function Paulze() {
                   LinkedIn
                 </a>
               </article>
-              <article className="founder-card reveal" style={{ '--d': '0.24s' } as React.CSSProperties}>
+              <article className="founder-card tilt-card reveal" style={{ '--d': '0.24s' } as React.CSSProperties}>
                 <div className="founder-photo" aria-hidden="true">
                   <img src={mattPhoto} alt="" />
                 </div>
