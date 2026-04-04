@@ -438,7 +438,6 @@ export default function Paulze() {
   const [stepDirection, setStepDirection] = useState<'down' | 'up'>('down');
   const prevStepRef = useRef(-1);
   const progressBarRef = useRef<HTMLDivElement>(null);
-  const [pageProgress, setPageProgress] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
 
   const HERO_PHRASES = ['No waste.', 'No write-offs.', 'No grey market.'];
