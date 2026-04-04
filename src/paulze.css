@@ -87,11 +87,13 @@ body {
   top: 0;
   left: 0;
   height: 2px;
+  width: 100%;
   background: linear-gradient(90deg, var(--accent), #00D4FF);
   z-index: 9998;
   pointer-events: none;
-  transition: width 0.05s linear;
   box-shadow: 0 0 8px rgba(0, 229, 160, 0.4);
+  transform-origin: left;
+  will-change: transform;
 }
 
 /* ─── Scroll Reveal ───────────────────────────────────────────────────────── */
@@ -370,7 +372,7 @@ body {
   display: flex;
   align-items: center;
   gap: 1.5rem;
-  padding: 0.5rem 0.5rem 0.5rem 1rem;
+  padding: 0.5rem 1.25rem 0.5rem 1rem;
   background: rgba(8, 18, 12, 0.65);
   backdrop-filter: blur(20px) saturate(1.4);
   -webkit-backdrop-filter: blur(20px) saturate(1.4);
@@ -397,6 +399,17 @@ body {
   text-decoration: none;
   color: inherit;
   flex-shrink: 0;
+  border-radius: 8px;
+  padding: 4px 6px;
+  transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+}
+.floating-nav-pill .logo-link:hover {
+  background: rgba(0, 229, 160, 0.08);
+  box-shadow: 0 0 12px rgba(0, 229, 160, 0.12);
+}
+.floating-nav-pill .logo-link:active {
+  transform: scale(0.95);
+  background: rgba(0, 229, 160, 0.14);
 }
 .floating-nav-pill .logo-img {
   height: 32px;
@@ -439,7 +452,7 @@ body {
 .nav-cta {
   display: inline-flex;
   align-items: center;
-  padding: 0.45rem 1.1rem;
+  padding: 0.35rem 0.9rem;
   background: var(--accent);
   color: var(--bg);
   font-family: 'Outfit', sans-serif;
@@ -703,9 +716,9 @@ body {
 .hero h1 span {
   background: linear-gradient(
     90deg,
-    #00E5A0 0%, #00D4FF 40%,
-    rgba(255,255,255,0.9) 50%,
-    #00D4FF 60%, #00E5A0 100%
+    #00E5A0 0%, #4DFFB8 40%,
+    rgba(220,255,240,0.95) 50%,
+    #4DFFB8 60%, #00E5A0 100%
   );
   background-size: 200% 100%;
   -webkit-background-clip: text;
@@ -822,7 +835,7 @@ section { padding: 6.5rem 0; }
   font-weight: 800;
   letter-spacing: -0.05em;
   line-height: 1;
-  background: linear-gradient(135deg, #00E5A0 0%, #00D4FF 50%, #00E5A0 100%);
+  background: linear-gradient(135deg, #00E5A0 0%, #b0ffe0 50%, #00E5A0 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -932,7 +945,85 @@ section { padding: 6.5rem 0; }
 
 
 
-/* ─── How It Works ────────────────────────────────────────────────────────── */
+/* ─── How It Works — Timeline ─────────────────────────────────────────────── */
+
+.hiw-timeline {
+  position: relative;
+  padding-left: 2.5rem;
+  margin-top: 2.5rem;
+  max-width: 36rem;
+}
+
+.hiw-track {
+  position: absolute;
+  left: 6px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: rgba(0, 229, 160, 0.1);
+}
+
+.hiw-track-fill {
+  position: absolute;
+  left: 6px;
+  top: 0;
+  width: 2px;
+  background: var(--accent);
+  transition: height 0.2s ease-out;
+  box-shadow: 0 0 8px rgba(0, 229, 160, 0.3);
+}
+
+.hiw-step {
+  position: relative;
+  padding-bottom: 2.5rem;
+}
+.hiw-step:last-child {
+  padding-bottom: 0;
+}
+
+.hiw-dot {
+  position: absolute;
+  left: -2.5rem;
+  top: 0.25rem;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 229, 160, 0.2);
+  background: transparent;
+  transition: all 0.2s ease-out;
+}
+
+.hiw-dot-active {
+  border-color: var(--accent);
+  background: var(--accent);
+  box-shadow: 0 0 14px rgba(0, 229, 160, 0.5);
+  transition: all 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hiw-step-content h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+  color: var(--text);
+}
+
+.hiw-step-content p {
+  color: var(--text-muted);
+  font-size: 0.93rem;
+  margin: 0;
+  line-height: 1.65;
+}
+
+@media (max-width: 640px) {
+  .hiw-timeline {
+    padding-left: 2rem;
+  }
+  .hiw-dot {
+    left: -2rem;
+  }
+}
+
+/* ─── How It Works — Grid (unused, kept for reference) ────────────────────── */
 
 .steps {
   display: grid;

@@ -433,10 +433,11 @@ const STEPS = [
 
 export default function Paulze() {
   const statRef = useRef<HTMLSpanElement>(null);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [activeStep, setActiveStep] = useState(0);
-  const [scrollProgress, setScrollProgress] = useState(0);
   const [activeSection, setActiveSection] = useState('');
+  const [activeStep, setActiveStep] = useState(-1);
+  const [stepDirection, setStepDirection] = useState<'down' | 'up'>('down');
+  const prevStepRef = useRef(-1);
+  const progressBarRef = useRef<HTMLDivElement>(null);
   const [pageProgress, setPageProgress] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -528,7 +529,10 @@ export default function Paulze() {
         header.classList.remove('scrolled');
       }
       const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-      setPageProgress(docHeight > 0 ? (sy / docHeight) * 100 : 0);
+      const progress = docHeight > 0 ? sy / docHeight : 0;
+      if (progressBarRef.current) {
+        progressBarRef.current.style.transform = `scaleX(${progress})`;
+      }
 
       // Parallax — only apply while hero is in view
       if (sy < window.innerHeight * 1.5) {
@@ -550,14 +554,45 @@ export default function Paulze() {
     return () => io.disconnect();
   }, []);
 
-  // Scrollspy for floating nav
+  // Step timeline observer — light up dots/line as steps scroll into view
   useEffect(() => {
-    const ids = ['problem', 'how-it-works', 'benefits', 'co-founders', 'contact'];
+    const stepEls = document.querySelectorAll<HTMLElement>('.hiw-step');
+    const visibleSteps = new Set<number>();
     const io = new IntersectionObserver(
       entries => {
         for (const e of entries) {
-          if (e.isIntersecting) setActiveSection(e.target.id);
+          const idx = Number(e.target.getAttribute('data-step'));
+          if (e.isIntersecting) visibleSteps.add(idx);
+          else visibleSteps.delete(idx);
         }
+        const next = visibleSteps.size > 0 ? Math.max(...visibleSteps) : -1;
+        if (next < prevStepRef.current) setStepDirection('up');
+        else if (next > prevStepRef.current) setStepDirection('down');
+        prevStepRef.current = next;
+        setActiveStep(next);
+      },
+      { threshold: 0.4 },
+    );
+    stepEls.forEach(el => io.observe(el));
+    return () => io.disconnect();
+  }, []);
+
+  // Scrollspy for floating nav
+  useEffect(() => {
+    const ids = ['problem', 'how-it-works', 'benefits', 'co-founders', 'contact'];
+    const visibleSections = new Set<string>();
+    const io = new IntersectionObserver(
+      entries => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            visibleSections.add(e.target.id);
+          } else {
+            visibleSections.delete(e.target.id);
+          }
+        }
+        // Pick the first visible section in document order, or clear if none visible
+        const current = ids.find(id => visibleSections.has(id));
+        setActiveSection(current ?? '');
       },
       { threshold: 0.3 },
     );
@@ -568,26 +603,11 @@ export default function Paulze() {
     return () => io.disconnect();
   }, []);
 
-  // Sticky scroll tracking for "How It Works"
-  useEffect(() => {
-    function onScroll() {
-      const container = scrollContainerRef.current;
-      if (!container) return;
-      const rect = container.getBoundingClientRect();
-      const scrollable = container.offsetHeight - window.innerHeight;
-      if (scrollable <= 0) return;
-      const progress = Math.max(0, Math.min(1, -rect.top / scrollable));
-      setScrollProgress(progress * 100);
-      setActiveStep(Math.min(2, Math.floor(progress * 3)));
-    }
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
 
   return (
     <>
       <div className="grain" aria-hidden="true" />
-      <div className="scroll-progress-bar" style={{ width: `${pageProgress}%` }} aria-hidden="true" />
+      <div ref={progressBarRef} className="scroll-progress-bar" style={{ transform: 'scaleX(0)' }} aria-hidden="true" />
 
       {/* Floating scrollspy nav */}
       <nav className="scroll-nav" aria-label="Page sections">
@@ -741,65 +761,39 @@ export default function Paulze() {
           <div className="section-divider-glow" />
         </div>
 
-        {/* ── Sticky Scroll: How It Works (desktop) ── */}
-        <section id="how-it-works" className="relative hidden md:block">
+        {/* ── How It Works ── */}
+        <section id="how-it-works" className="relative overflow-hidden">
           <div className="pointer-events-none absolute -right-[20%] top-[10%] h-[60%] w-[40%] rounded-full bg-[radial-gradient(circle,rgba(0,229,160,0.05)_0%,transparent_70%)] blur-3xl" aria-hidden="true" />
-          <div ref={scrollContainerRef} className="relative min-h-[300vh]">
-            <div className="sticky top-0 flex min-h-screen items-center overflow-hidden py-24">
-              <div className="container">
-                <p className="section-label">How It Works</p>
-                <h2 className="section-title mb-4">Three steps to liquidate and buy</h2>
-                <p className="section-subtitle mb-12">
-                  We broker the deal so manufacturers recover value and distributors get vetted product at a discount.
-                </p>
-
-                <div className="relative pl-12">
-                  {/* Track */}
-                  <div className="absolute left-[7px] top-0 h-full w-px bg-[rgba(0,229,160,0.1)]" />
-                  {/* Active fill */}
-                  <div
-                    className="absolute left-[7px] top-0 w-px bg-[var(--accent)]"
-                    style={{ height: `${scrollProgress}%`, transition: 'height 0.1s ease-out' }}
-                  />
-
-                  {STEPS.map((step, i) => (
-                    <div
-                      key={i}
-                      className={`relative mb-16 last:mb-0 transition-all duration-500 ${
-                        activeStep >= i ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-20'
-                      }`}
-                    >
-                      {/* Dot */}
-                      <div className={`absolute -left-12 top-1.5 h-3.5 w-3.5 rounded-full border-2 transition-all duration-300 ${
-                        activeStep >= i
-                          ? 'border-[var(--accent)] bg-[var(--accent)] shadow-[0_0_12px_rgba(0,229,160,0.5)]'
-                          : 'border-[rgba(0,229,160,0.2)] bg-transparent'
-                      }`} />
-                      <div className="step-num">{step.num}</div>
-                      <h3 className="text-lg font-semibold text-[var(--text)] mb-2">{step.title}</h3>
-                      <p className="text-[var(--text-muted)] text-sm leading-relaxed max-w-lg">{step.desc}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ── Mobile fallback: How It Works ── */}
-        <section className="relative overflow-hidden md:hidden">
-          <div className="container py-16">
+          <div className="container py-24">
             <p className="section-label reveal">How It Works</p>
             <h2 className="section-title reveal">Three steps to liquidate and buy</h2>
             <p className="section-subtitle reveal">
               We broker the deal so manufacturers recover value and distributors get vetted product at a discount.
             </p>
-            <div className="flex flex-col gap-6">
+
+            <div className="hiw-timeline">
+              {/* Track background */}
+              <div className="hiw-track" />
+              {/* Active fill */}
+              <div className="hiw-track-fill" style={{
+                height: activeStep >= 0 ? `${((activeStep + 1) / STEPS.length) * 100}%` : '0%',
+                transitionDuration: stepDirection === 'down' ? '0.6s' : '0.2s',
+              }} />
+
               {STEPS.map((step, i) => (
-                <div key={i} className="step tilt-card reveal" style={{ '--d': `${i * 0.12}s` } as React.CSSProperties}>
-                  <div className="step-num">{step.num}</div>
-                  <h3>{step.title}</h3>
-                  <p>{step.desc}</p>
+                <div
+                  key={i}
+                  data-step={i}
+                  className={`hiw-step ${activeStep >= i ? 'step-lit' : ''}`}
+                  style={{ '--d': `${i * 0.12}s` } as React.CSSProperties}
+                >
+                  {/* Dot */}
+                  <div className={`hiw-dot ${activeStep >= i ? 'hiw-dot-active' : ''}`} />
+                  <div className="hiw-step-content">
+                    <div className="step-num">{step.num}</div>
+                    <h3>{step.title}</h3>
+                    <p>{step.desc}</p>
+                  </div>
                 </div>
               ))}
             </div>
