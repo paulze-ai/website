@@ -440,7 +440,7 @@ export default function Paulze() {
   const progressBarRef = useRef<HTMLDivElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const HERO_PHRASES = ['No waste.', 'No write-offs.', 'No grey market.'];
+  const HERO_PHRASES = ['Minimize waste.', 'Reduce write-offs.', 'Eliminate emissions.'];
   const [typedText, setTypedText] = useState('');
 
   useEffect(() => {
