@@ -488,7 +488,7 @@ export default function Paulze() {
       return;
     }
     // For now, open mailto as a fallback. Replace with API call when backend is ready.
-    window.location.href = `mailto:investors@paulze.com?subject=Interest from ${encodeURIComponent(email)}&body=Contact me at ${encodeURIComponent(email)}`;
+    window.location.href = `mailto:team@paulze.com?subject=Interest from ${encodeURIComponent(email)}&body=Contact me at ${encodeURIComponent(email)}`;
     setEmailStatus('success');
     setEmail('');
     setTimeout(() => setEmailStatus('idle'), 4000);
@@ -913,7 +913,7 @@ export default function Paulze() {
                     <p className="contact-feedback contact-feedback-error">Please enter a valid email address.</p>
                   )}
                 </form>
-                <p className="contact-fine-print">Or email us directly at <a href="mailto:investors@paulze.com">investors@paulze.com</a></p>
+                <p className="contact-fine-print">Or email us directly at <a href="mailto:team@paulze.com">team@paulze.com</a></p>
               </div>
             </div>
           </div>
@@ -930,6 +930,7 @@ export default function Paulze() {
             <div className="footer-contact">
               <h4>Contact</h4>
               <a href="mailto:team@paulze.com">team@paulze.com</a>
+              <a href="mailto:investors@paulze.com">investors@paulze.com</a>
             </div>
           </div>
         </footer>

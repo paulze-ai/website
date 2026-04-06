@@ -1409,6 +1409,7 @@ footer {
   margin: 0 0 0.6rem;
 }
 .footer-contact a {
+  display: block;
   color: var(--text);
   font-size: 0.95rem;
   text-decoration: none;
