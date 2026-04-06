@@ -767,7 +767,7 @@ export default function Paulze() {
             <p className="section-label reveal">How It Works</p>
             <h2 className="section-title reveal">Three steps to liquidate and buy</h2>
             <p className="section-subtitle reveal">
-              We broker the deal so manufacturers recover value and distributors get vetted product at a discount.
+              We broker the deal so manufacturers recover value and distributors get vetted products at a discount.
             </p>
 
             <div className="hiw-timeline">
