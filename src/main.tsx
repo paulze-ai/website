@@ -1,12 +1,10 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import { BrowserRouter } from 'react-router-dom'
-import AppRoutes from './routes'
+import { ViteReactSSG } from 'vite-react-ssg'
+import { Navigate } from 'react-router-dom'
+import Paulze from './paulze'
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <BrowserRouter>
-      <AppRoutes />
-    </BrowserRouter>
-  </StrictMode>,
-)
+export const createRoot = ViteReactSSG({
+  routes: [
+    { path: '/', element: <Paulze /> },
+    { path: '*', element: <Navigate to="/" replace /> },
+  ],
+})
