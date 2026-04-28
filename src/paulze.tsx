@@ -934,7 +934,9 @@ export default function Paulze() {
             </div>
           </div>
         </footer>
-
+<div class="bottom-bar">
+  <p> 2026 Paulze Inc.</p>
+</div>
       </main>
     </>
   );
