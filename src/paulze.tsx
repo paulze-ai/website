@@ -358,7 +358,8 @@ function useTiltCards() {
       const rect = this.getBoundingClientRect();
       const x = (e.clientX - rect.left) / rect.width - 0.5;   // -0.5 to 0.5
       const y = (e.clientY - rect.top) / rect.height - 0.5;
-      this.style.transform = `perspective(800px) rotateY(${x * 8}deg) rotateX(${-y * 8}deg)`;
+      const strength = this.classList.contains('bento-wide') ? 4 : 8;
+      this.style.transform = `perspective(800px) rotateY(${x * strength}deg) rotateX(${-y * strength}deg)`;
       this.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
       this.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
     }
@@ -815,7 +816,7 @@ export default function Paulze() {
               <div className="benefits-column glow-border reveal" style={{ '--d': '0s' } as React.CSSProperties}>
                 <h3>For Manufacturers</h3>
                 <ul>
-                  <li>Liquidate near-expiry inventory without damaging brand or channel</li>
+                  <li>Liquidate slow-moving inventory without damaging brand or channel</li>
                   <li>Recover value instead of writing off product</li>
                   <li>Vetted distributors only — no grey market risk</li>
                   <li>Simple process: list SKUs, we handle matching and brokering</li>
@@ -841,7 +842,7 @@ export default function Paulze() {
             <p className="section-label">The Team</p>
             <h2 className="section-title">Co-founders</h2>
             <p className="section-subtitle">
-              The team building the marketplace for near-expiry crop protection.
+              The team building the marketplace for slow-moving crop protection.
             </p>
             <div className="founders-grid">
               <article className="founder-card glow-border tilt-card reveal" style={{ '--d': '0s' } as React.CSSProperties}>
@@ -928,7 +929,7 @@ export default function Paulze() {
               <a href="/" className="logo-link">
                 <img src={paulzeLogo} alt="Paulze" className="logo-img" />
               </a>
-              <p>B2B marketplace for near-expiry crop protection chemicals. Connect with us to list or buy.</p>
+              <p>B2B marketplace for slow-moving crop protection chemicals. Connect with us to list or buy.</p>
             </div>
             <div className="footer-contact">
               <h4>Contact</h4>
