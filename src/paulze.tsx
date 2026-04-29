@@ -426,9 +426,9 @@ function useAnimatedCounter(ref: React.RefObject<HTMLElement | null>) {
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 const STEPS = [
-  { num: 'Step 1', title: 'Manufacturers list SKUs', desc: 'Submit near-expiry crop protection SKUs and volumes. We handle pricing and matching.' },
-  { num: 'Step 2', title: 'Paulze brokers the deal', desc: 'We connect you with vetted distributors and facilitate terms, documentation, and logistics.' },
-  { num: 'Step 3', title: 'Distributors buy at discount', desc: 'Distributors purchase at a discount for short-cycle use — product moves, everyone wins.' },
+  { num: 'Step 1', title: 'Suppliers list SKUs', desc: 'Submit crop protection SKUs, UoM, packaging type, and quantity. We handle the matching.' },
+  { num: 'Step 2', title: 'Paulze brokers the deal', desc: 'We connect you with vetted customers and facilitate the transaction, payment handling, and logistics.' },
+  { num: 'Step 3', title: 'Customers transact and take delivery of the inventory', desc: 'Customers purchase at a discount — product moves, everyone wins.' },
 ];
 
 export default function Paulze() {
@@ -690,7 +690,7 @@ export default function Paulze() {
 
           <div className="container hero-content">
             <span className="hero-badge hero-enter hero-enter-badge">B2B Marketplace</span>
-            <h1 className="hero-enter hero-enter-h1">Liquidate slow-moving crop protection.<br /><span className="no-wrap typewriter">{typedText}<span className="typewriter-cursor" aria-hidden="true">|</span></span></h1>
+            <h1 className="hero-enter hero-enter-h1"><span className="no-wrap">Liquidate slow‑moving</span><br /> crop protection.<br /><span className="no-wrap typewriter">{typedText}<span className="typewriter-cursor" aria-hidden="true">|</span></span></h1>
             <p className="hero-tagline hero-enter hero-enter-tagline">
               Paulze connects agrochemical distributors with a vetted network to move soon-to-expire inventory at fair prices — so nothing goes to waste.
             </p>
@@ -737,8 +737,8 @@ export default function Paulze() {
                     <line x1="21" y1="21" x2="28" y2="28" />
                   </svg>
                 </div>
-                <h3>Distributors miss deals</h3>
-                <p>No trusted channel to source near-expiry product at discount for short-cycle use.</p>
+                <h3>Retailers and demand miss deals</h3>
+                <p>No trusted channel to source slow-moving inventory at discount for short-cycle use.</p>
               </div>
               <div className="bento-card bento-wide glow-border tilt-card reveal" style={{ '--d': '0.3s' } as React.CSSProperties}>
                 <div className="bento-icon">
@@ -767,7 +767,7 @@ export default function Paulze() {
             <p className="section-label reveal">How It Works</p>
             <h2 className="section-title reveal">Three steps to liquidate and buy</h2>
             <p className="section-subtitle reveal">
-              We broker the deal so manufacturers recover value and distributors get vetted products at a discount.
+              We broker the deal so suppliers recover value and customers get vetted products at a discount.
             </p>
 
             <div className="hiw-timeline">
@@ -850,6 +850,7 @@ export default function Paulze() {
                 </div>
                 <h2 className="founder-name">Meyer Eskin</h2>
                 <p className="founder-uni">Queen's University</p>
+                <p className="founder-role">Chief Executive Officer</p>
                 <a href="https://www.linkedin.com/in/meyereskin/" className="founder-linkedin" target="_blank" rel="noopener noreferrer">
                   <LinkedInIcon />
                   LinkedIn
@@ -861,6 +862,7 @@ export default function Paulze() {
                 </div>
                 <h2 className="founder-name">Neo Matsuyama</h2>
                 <p className="founder-uni">University of Pennsylvania</p>
+                <p className="founder-role">Chief Operating Officer</p>
                 <a href="https://www.linkedin.com/in/neo-matsuyama/" className="founder-linkedin" target="_blank" rel="noopener noreferrer">
                   <LinkedInIcon />
                   LinkedIn
@@ -872,6 +874,7 @@ export default function Paulze() {
                 </div>
                 <h2 className="founder-name">Matthew Fallon</h2>
                 <p className="founder-uni">Wharton, University of Pennsylvania</p>
+                <p className="founder-role">Chief Technology Officer</p>
                 <a href="https://www.linkedin.com/in/mattf196/" className="founder-linkedin" target="_blank" rel="noopener noreferrer">
                   <LinkedInIcon />
                   LinkedIn

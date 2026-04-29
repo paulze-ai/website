@@ -126,7 +126,9 @@ body {
   animation: heroSlideIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 .hero-enter-badge  { animation-delay: 0.15s; }
-.hero-enter-h1     { animation-delay: 0.35s; }
+.hero-enter-h1     { animation-delay: 0.35s;
+  max-width:none;
+ }
 .hero-enter-tagline { animation-delay: 0.55s; }
 
 @keyframes heroSlideIn {
@@ -711,7 +713,11 @@ body {
   line-height: 1.1;
   letter-spacing: -0.03em;
   margin: 0 0 1.25rem;
-  max-width: 18ch;
+  max-width: none;
+}
+.hero h1 span.no-wrap:not(.typewriter) {
+  background: none;
+  -webkit-text-fill-color: var(--text);
 }
 .hero h1 span {
   background: linear-gradient(
@@ -1217,7 +1223,8 @@ section { padding: 6.5rem 0; }
   margin: 0 0 0.4rem;
   color: var(--text);
 }
-.founder-uni { font-size: 0.87rem; color: var(--text-muted); margin: 0 0 1rem; }
+.founder-uni { font-size: 0.87rem; color: var(--text-muted); margin: 0 0 0.35rem; }
+.founder-role { font-size: 0.8rem; color: var(--accent); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; margin: 0 0 1rem; }
 .founder-linkedin {
   display: inline-flex;
   align-items: center;
