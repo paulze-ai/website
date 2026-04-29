@@ -690,9 +690,9 @@ export default function Paulze() {
 
           <div className="container hero-content">
             <span className="hero-badge hero-enter hero-enter-badge">B2B Marketplace</span>
-            <h1 className="hero-enter hero-enter-h1">Liquidate near-expiry crop protection.<br /><span className="no-wrap typewriter">{typedText}<span className="typewriter-cursor" aria-hidden="true">|</span></span></h1>
+            <h1 className="hero-enter hero-enter-h1">Liquidate slow-moving crop protection.<br /><span className="no-wrap typewriter">{typedText}<span className="typewriter-cursor" aria-hidden="true">|</span></span></h1>
             <p className="hero-tagline hero-enter hero-enter-tagline">
-              Paulze connects agrochemical manufacturers with vetted distributors to move soon-to-expire inventory at fair prices — so nothing goes to waste.
+              Paulze connects agrochemical distributors with a vetted network to move soon-to-expire inventory at fair prices — so nothing goes to waste.
             </p>
             <a href="#contact" className="hero-cta glow-btn hero-enter hero-enter-cta">Get in Touch</a>
           </div>
@@ -706,9 +706,9 @@ export default function Paulze() {
         <section id="problem" className="problem dot-grid-bg">
           <div className="container">
             <p className="section-label reveal">The Problem</p>
-            <h2 className="section-title reveal">Billions in chemicals expire every year</h2>
+            <h2 className="section-title reveal">Billions in chemicals idle and expire every year</h2>
             <p className="section-subtitle reveal">
-              Unsold crop protection products often sit until they pass expiry — destroying value for manufacturers and leaving distributors without access to discounted supply.
+              Unsold crop protection accumulates carrying costs for manufacturers and distributors — tying up working capital and warehouse space — while demand and retailers lose access to discounted, vetted supply.
             </p>
             <div className="bento-grid">
               <div className="bento-card bento-hero glow-border tilt-card reveal" style={{ '--d': '0s' } as React.CSSProperties}>
@@ -727,8 +727,8 @@ export default function Paulze() {
                     <line x1="28" y1="8" x2="28" y2="24" />
                   </svg>
                 </div>
-                <h3>Manufacturers lose margin</h3>
-                <p>Excess inventory and write-offs hurt profitability and complicate planning.</p>
+                <h3>Suppliers lose margin</h3>
+                <p>Excess inventory and write-downs hurt profitability and complicate planning.</p>
               </div>
               <div className="bento-card bento-small glow-border tilt-card reveal-slide" style={{ '--d': '0.2s' } as React.CSSProperties}>
                 <div className="bento-icon">
